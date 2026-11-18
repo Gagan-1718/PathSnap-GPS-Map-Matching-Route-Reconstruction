@@ -47,6 +47,14 @@ SEARCH_SPACES = {
     "logistic_regression": {
         "C": ("float", 1e-3, 100.0, "log"),
     },
+    "lightgbm": {
+        "n_estimators": ("int", 100, 500),
+        "learning_rate": ("float", 0.02, 0.3, "log"),
+        "num_leaves": ("int", 15, 127, "log"),
+        "min_child_samples": ("int", 10, 300, "log"),
+        "colsample_bytree": ("float", 0.5, 1.0),
+        "reg_lambda": ("float", 1e-3, 10.0, "log"),
+    },
 }
 
 
