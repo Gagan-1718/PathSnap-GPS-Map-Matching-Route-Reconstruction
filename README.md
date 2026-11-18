@@ -56,7 +56,11 @@ Then place the dataset in `data/` (see [data/README.md](data/README.md)).
 
 ## Reproducing the results
 
-Run from the repository root, in this order. You can also run `deployment\run_pipeline.bat` to do all of it.
+**Google Colab:** open [PathSnap_Colab.ipynb](PathSnap_Colab.ipynb) →
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Gagan-1718/PathSnap-GPS-Map-Matching-Route-Reconstruction/blob/feat/pathsnap-pipeline/PathSnap_Colab.ipynb).
+It clones this repo, asks you to upload the dataset zip, and runs every stage below with its outputs.
+
+**Locally:** run from the repository root, in this order. You can also run `deployment\run_pipeline.bat` to do all of it.
 
 ```bash
 python -m data_processing.explore_data            # dataset inventory and quality checks
