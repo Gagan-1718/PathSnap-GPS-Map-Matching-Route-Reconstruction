@@ -11,6 +11,7 @@
     "dist_rank",
     "dist_gap_m",
     "heading_diff",
+    "heading_reliable",
     "speed_mps",
     "arc_len_m",
     "proj_frac",
@@ -19,6 +20,6 @@
   ],
   "cv": "GroupKFold(5) by trip",
   "train_trips": 80,
-  "train_rows": 1405180,
-  "fit_time_s": 2.268
+  "train_rows": 1183290,
+  "fit_time_s": 2.783
 }

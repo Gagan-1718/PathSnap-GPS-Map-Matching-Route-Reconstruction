@@ -1,0 +1,24 @@
+{
+  "model": "gaussian_naive_bayes",
+  "family": "Linear / probabilistic",
+  "params": {
+    "var_smoothing": 1e-09
+  },
+  "seed": 42,
+  "features": [
+    "dist_m",
+    "dist_rank",
+    "dist_gap_m",
+    "heading_diff",
+    "heading_reliable",
+    "speed_mps",
+    "arc_len_m",
+    "proj_frac",
+    "n_candidates",
+    "time_gap_s"
+  ],
+  "cv": "GroupKFold(5) by trip",
+  "train_trips": 80,
+  "train_rows": 1183290,
+  "fit_time_s": 0.214
+}

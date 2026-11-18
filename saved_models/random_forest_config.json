@@ -1,0 +1,26 @@
+{
+  "model": "random_forest",
+  "family": "Ensemble",
+  "params": {
+    "n_estimators": 100,
+    "max_depth": 12,
+    "min_samples_leaf": 20
+  },
+  "seed": 42,
+  "features": [
+    "dist_m",
+    "dist_rank",
+    "dist_gap_m",
+    "heading_diff",
+    "heading_reliable",
+    "speed_mps",
+    "arc_len_m",
+    "proj_frac",
+    "n_candidates",
+    "time_gap_s"
+  ],
+  "cv": "GroupKFold(5) by trip",
+  "train_trips": 80,
+  "train_rows": 1183290,
+  "fit_time_s": 32.497
+}
