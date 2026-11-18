@@ -68,10 +68,11 @@ python -m feature_engineering.build_dataset       # candidates, features, labels
 python -m model_training.train_models             # 6 models, 5-fold GroupKFold CV
 python -m model_evaluation.evaluate_models        # student-test comparison
 python -m hmm_viterbi.tune_decoder random_forest  # decoder penalties (training trips only)
-python -m hyperparameter_optimisation.bayes_opt decision_tree 20
+python -m hyperparameter_optimisation.bayes_opt lightgbm 20
+python -m model_evaluation.pipeline_cv decision_tree random_forest lightgbm lightgbm_tuned   # model selection
 python -m hmm_viterbi.evaluate_hmm                # classifier-only vs classifier + HMM
 python -m visualisations.plots                    # plots in results/plots
-python -m visualisations.folium_maps decision_tree   # maps in results/maps
+python -m visualisations.folium_maps lightgbm_tuned   # maps in results/maps
 ```
 
 ## Running the system (two laptops)
@@ -97,12 +98,28 @@ Full steps, including the firewall and evaluator trips, are in [deployment/DEPLO
 |---|---|---|---|---|---|---|
 | 1 | Logistic Regression | Linear | 87.8% | 87.9% | 88.9% | 87.4% |
 | 2 | Gaussian Naive Bayes | Probabilistic | 86.9% | 86.3% | 88.1% | 87.6% |
-| 3 | **Decision Tree (final)** | Tree | **89.1%** | 90.1% | **91.8%** | 87.2% |
+| 3 | Decision Tree | Tree | 89.1% | 90.1% | 91.8% | 87.2% |
 | 4 | K-Nearest Neighbours | Instance-based | 88.0% | 89.5% | 90.6% | 86.4% |
 | 5 | Random Forest | Ensemble (bagging) | 89.1% | 90.2% | 91.8% | 86.7% |
 | 6 | LightGBM | Boosting | 89.1% | 90.3% | 91.5% | 87.0% |
+| ★ | **LightGBM, tuned (final)** | Boosting | **89.2%** | 90.2% | 91.6% | 87.0% |
 
-**Final model: Decision Tree.** It has the best CV score and the best test accuracy with HMM. It's also the smallest and fastest model, and the easiest to explain. Bayesian optimisation (Optuna TPE, 20 trials) didn't beat its starting settings, so the untuned version is kept. See `results/hpo/`.
+### How the final model was chosen
+
+The rule was fixed before looking at the results:
+
+1. **Main score:** right road **with HMM** over the full pipeline, cross-validated on all **80 training trips** (`results/model_selection/`).
+2. **Is the gap real?** A paired bootstrap over trips (2000 resamples). A model must win at least 90% of resamples to count as better.
+3. **If tied:** prefer better probability quality (log loss), because the HMM uses the probabilities. Then prefer speed.
+
+| Full pipeline, 80 trips | Right road + HMM | Log loss (CV) |
+|---|---|---|
+| Random Forest | 91.73% | 0.0905 |
+| **LightGBM, tuned** | 91.65% | **0.0886** |
+| LightGBM | 91.63% | 0.0895 |
+| Decision Tree | 91.63% | 0.0926 |
+
+The top models are a **statistical tie**: Random Forest beats tuned LightGBM in only 76% of bootstrap resamples. The tie-break picks **tuned LightGBM**, which has the best probabilities, the best route match (0.904) and the best model-only accuracy (89.2%). Bayesian optimisation (Optuna TPE, 20 trials) improved LightGBM's CV score and log loss. See `results/hpo/`. The 10 student-test trips only confirm the choice; they were not used to make it.
 
 **HMM + Viterbi** improves every model: route continuity rises from about 68–74% (model only) to 86–88%.
 
