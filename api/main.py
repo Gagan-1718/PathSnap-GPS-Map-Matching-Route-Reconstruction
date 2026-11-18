@@ -1,6 +1,7 @@
 """FastAPI service for route reconstruction."""
 
 from pathlib import Path
+import re
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,7 +43,12 @@ def trips():
 @app.post("/route")
 def reconstruct(request: RouteRequest):
     data_dir = Path("pathsnap/data") if Path("pathsnap/data").exists() else Path("data")
-    trip_dir = data_dir / request.trip_id
+    data_dir = data_dir.resolve()
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", request.trip_id):
+        raise HTTPException(status_code=400, detail="Invalid trip ID")
+    trip_dir = (data_dir / request.trip_id).resolve()
+    if trip_dir.parent != data_dir:
+        raise HTTPException(status_code=400, detail="Invalid trip ID")
     if not trip_dir.exists():
         raise HTTPException(status_code=404, detail="Trip not found")
     trip = load_trip(trip_dir)

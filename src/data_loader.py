@@ -33,7 +33,7 @@ def load_route(path: Union[str, Path]) -> np.ndarray:
 
 def load_trip(trip_dir: Union[str, Path]) -> dict:
     """Load a trip without loading anything except data files on disk."""
-    trip_dir = Path(trip_dir)
+    trip_dir = Path(trip_dir).resolve()
     def find_file(kind: str, stem: str) -> Path:
         choices = (
             trip_dir / f"{stem}.{kind}",
@@ -41,13 +41,11 @@ def load_trip(trip_dir: Union[str, Path]) -> dict:
             trip_dir / stem,
             trip_dir / f"{kind}.{kind}",
             trip_dir / f"{kind}.{stem}",
+            trip_dir / f"gps.{kind}" if kind == "track" else trip_dir / f"map.{kind}" if kind == "nodes" else trip_dir / f"roads.{kind}" if kind == "arcs" else trip_dir / f"reference.{kind}",
         )
         for choice in choices:
             if choice.exists():
                 return choice
-        matches = list(trip_dir.glob(f"*.{kind}"))
-        if len(matches) == 1:
-            return matches[0]
         raise FileNotFoundError(f"No .{kind} file found in {trip_dir}")
 
     route_path = None
