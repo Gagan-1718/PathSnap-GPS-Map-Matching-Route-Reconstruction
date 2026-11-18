@@ -139,7 +139,7 @@
   table.simple td { padding: 15px 12px; font-size: 16px; }
   table.simple td.num { white-space: nowrap; }
   table.simple .from { color: var(--faint); }
-  table.simple .arrow { color: var(--faint); margin: 0 6px; }
+  table.simple .to-arrow { color: var(--faint); margin: 0 8px; }
   table.simple .to { font-weight: 600; }
   .tag { font: 11px var(--mono); color: var(--accent-orange); border: 1px solid rgba(212,137,90,.4); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
   .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: 0; }
@@ -500,6 +500,41 @@ function groupedBars(container, cats, series, opt = {}) {
   });
 }
 
+/* horizontal paired bars: one row per category, a thin bar per series, value at the bar end */
+function hBars(container, cats, series, opt = {}) {
+  if (!cats.length || series.every(s => s.values.every(v => v == null))) { container.innerHTML = '<div class="empty">No results yet.</div>'; return; }
+  const barH = 11, gap = 3, rowGap = 16, rowH = series.length * barH + (series.length - 1) * gap;
+  const w0 = Math.max(container.clientWidth, 280);
+  const labelW = Math.min(170, Math.max(110, w0 * 0.32));
+  const m = { l: labelW, r: 52, t: 6, b: 24 };
+  const { svg, w, h } = frame(container, m.t + m.b + cats.length * (rowH + rowGap) - rowGap);
+  const x = v => m.l + (w - m.l - m.r) * v;   // 0..1 → px (bars start at zero)
+  const g = el("g", { class: "axis" }, svg);
+  [0, .25, .5, .75, 1].forEach(t => {
+    el("line", { x1: x(t), x2: x(t), y1: m.t, y2: h - m.b + 4, class: "grid-line" }, g);
+    const tx = el("text", { x: x(t), y: h - 6, "text-anchor": "middle" }, g); tx.textContent = Math.round(t * 100) + "%";
+  });
+  cats.forEach((c, i) => {
+    const y0 = m.t + i * (rowH + rowGap);
+    const lab = el("text", { x: m.l - 12, y: y0 + rowH / 2 + 4, "text-anchor": "end", fill: css("--text"), "font-size": 13,
+      "font-weight": opt.highlight === i ? 600 : 400 }, svg);
+    lab.textContent = c;
+    series.forEach((s, j) => {
+      const v = s.values[i]; if (v == null) return;
+      const y = y0 + j * (barH + gap);
+      // rounded data-end on the right, square at the zero baseline
+      const r = Math.min(4, barH / 2), x1 = x(v);
+      el("path", { d: `M${x(0)},${y} H${x1 - r} Q${x1},${y} ${x1},${y + r} V${y + barH - r} Q${x1},${y + barH} ${x1 - r},${y + barH} H${x(0)} Z`, fill: s.color }, svg);
+      const t = el("text", { x: x1 + 6, y: y + barH - 1.5, fill: j === series.length - 1 ? css("--text") : css("--muted"), "font-size": 11.5,
+        "font-weight": j === series.length - 1 ? 600 : 400 }, svg);
+      t.textContent = (v * 100).toFixed(1) + "%";
+    });
+    const hit = el("rect", { x: 0, y: y0 - rowGap / 2, width: w, height: rowH + rowGap, fill: "transparent" }, svg);
+    hit.addEventListener("mousemove", e => showTip(e, `<div class="t">${c}</div>${series.map(s => `${s.name}: <b>${pct(s.values[i])}</b>`).join("<br>")}`));
+    hit.addEventListener("mouseleave", hideTip);
+  });
+}
+
 /* line chart with markers (x = fold index) */
 function lineChart(container, xs, series, opt = {}) {
   if (!series.length) { container.innerHTML = '<div class="empty">No fold results yet.</div>'; return; }
@@ -584,17 +619,17 @@ function dumbbell(container, rows) {
 }
 
 function drawCharts() {
-  const rows = summary.models, ch = summary.charts || {};
+  const best = summary.default_model;
+  // same order as the table: final model first, then best "with HMM" first
+  const rows = [...summary.models].sort((a, b) => (b.model === best) - (a.model === best) || (b.hmm_top1 ?? 0) - (a.hmm_top1 ?? 0));
   const cats = rows.map(r => short(r.model));
-  groupedBars($("chTop1"), cats, [
-    { name: "Model only", color: css("--s-clf"), values: rows.map(r => r.clf_top1) },
-    { name: "Model + HMM", color: css("--s-hmm"), values: rows.map(r => r.hmm_top1) }]);
-  groupedBars($("chCont"), cats, [
-    { name: "Model only", color: css("--s-clf"), values: rows.map(r => r.clf_continuity) },
-    { name: "Model + HMM", color: css("--s-hmm"), values: rows.map(r => r.hmm_continuity) }]);
-  groupedBars($("chRoute"), cats, [
-    { name: "Model only", color: css("--s-clf"), values: rows.map(r => r.clf_route_f1) },
-    { name: "Model + HMM", color: css("--s-hmm"), values: rows.map(r => r.hmm_route_f1) }]);
+  const opt = { highlight: rows.findIndex(r => r.model === best) };
+  const pairs = (a, b) => [
+    { name: "Model only", color: css("--s-clf"), values: rows.map(r => r[a]) },
+    { name: "Model + HMM", color: css("--s-hmm"), values: rows.map(r => r[b]) }];
+  hBars($("chTop1"), cats, pairs("clf_top1", "hmm_top1"), opt);
+  hBars($("chCont"), cats, pairs("clf_continuity", "hmm_continuity"), opt);
+  hBars($("chRoute"), cats, pairs("clf_route_f1", "hmm_route_f1"), opt);
 }
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (summary && pages[current].dataset.title === "Results") drawCharts(); }, 150); });
 
@@ -671,7 +706,8 @@ function initMap() {
   };
   bases["Streets"].addTo(map);
   routeLayer = L.layerGroup().addTo(map); gpsLayer = L.layerGroup().addTo(map); pinLayer = L.layerGroup().addTo(map);
-  L.control.layers(bases, null, { collapsed: false }).addTo(map);   // basemap switch only
+  L.control.layers(bases, { "Raw GPS points": gpsLayer, "Predicted route": routeLayer, "Start / end": pinLayer },
+    { collapsed: false }).addTo(map);
   L.control.scale({ imperial: false }).addTo(map);
   mapReady = true;
 }
@@ -723,7 +759,7 @@ function fillResults() {
   ];
   $("kpis").innerHTML = kpis.map(([k, v, s]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
   const sorted = [...rows].sort((a, b) => (b.model === best) - (a.model === best) || (b.hmm_top1 ?? 0) - (a.hmm_top1 ?? 0));
-  const pair = (a, b, d = 1) => `<span class="from">${pct(a, d)}</span><span class="arrow">→</span><span class="to">${pct(b, d)}</span>`;
+  const pair = (a, b, d = 1) => `<span class="from">${pct(a, d)}</span><span class="to-arrow">→</span><span class="to">${pct(b, d)}</span>`;
   $("resTable").querySelector("tbody").innerHTML = sorted.map(r => `
     <tr class="${r.model === best ? "best" : ""}">
       <td><span class="sw" style="background:${modelColor(r.model)}"></span>${pretty(r.model)}${r.model === best ? '<span class="tag">final</span>' : ""}</td>
@@ -802,7 +838,9 @@ function fillData() {
 /* ---------- start ---------- */
 let start = 0;
 try { start = +(localStorage.getItem("pathsnap_page") || 0); } catch (e) {}
-go(start);
+// a link like ui/#results opens that page directly
+const fromHash = pages.findIndex(p => "#" + p.dataset.title.toLowerCase().replace(/\s+/g, "-") === location.hash.toLowerCase());
+go(fromHash >= 0 ? fromHash : start);
 connect();
 </script>
 </body>
