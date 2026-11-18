@@ -11,18 +11,18 @@
 <style>
   :root {
     --bg: #111413; --panel: #161a18; --panel-2: #1b201d; --line: #262b28; --line-2: #333934;
-    --text: #ecebe4; --muted: #9a9e97; --faint: #6b706a;
+    --text: #f0efe8; --muted: #b3b7af; --faint: #868b83;
     --accent-green: #9fbf8c; --accent-orange: #d4895a; --err: #e66767;
     /* chart series (validated for the dark surface with the dataviz palette checker) */
     --s-clf: #3987e5; --s-hmm: #d95926;
     --s-m1: #199e70; --s-m2: #9085e9; --s-m3: #c98500; --s-m4: #d55181; --s-m5: #0ca30c; --s-m6: #e66767;
-    --gps: #7fb0e0;
+    --gps: #1d3fb8;
     --serif: "Cormorant Garamond", Georgia, serif;
     --sans: "IBM Plex Sans", system-ui, sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, monospace;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 var(--sans); }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.6 var(--sans); }
   button { font: inherit; cursor: pointer; }
   code { font: 13px var(--mono); color: var(--muted); }
 
@@ -54,15 +54,15 @@
   section.page { display: none; }
   section.page.active { display: block; animation: fade .25s ease; }
   @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  .eyebrow { font: 500 12px var(--mono); letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
+  .eyebrow { font: 500 13px var(--mono); letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
   h1 { font: 500 clamp(44px, 6vw, 76px)/1.02 var(--serif); margin: 0 0 22px; letter-spacing: -.5px; }
   h1 em { color: var(--accent-green); font-style: italic; display: block; }
   h2 { font: 500 clamp(34px, 4vw, 48px)/1.08 var(--serif); margin: 0 0 12px; }
   h3 { font: 500 26px/1.15 var(--serif); margin: 0 0 6px; }
   h4 { font: 500 12px var(--mono); letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
-  .lead { color: #c9cac2; font-size: 18px; max-width: 700px; margin: 0 0 28px; }
+  .lead { color: #d6d7cf; font-size: 19px; max-width: 720px; margin: 0 0 28px; }
   .lead b { color: var(--text); }
-  .muted { color: var(--muted); } .small { font-size: 14px; }
+  .muted { color: var(--muted); } .small { font-size: 15px; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 26px 28px; }
   .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
   .card-head p { margin: 0; }
@@ -96,13 +96,16 @@
   .trip:disabled { opacity: .5; }
   #status { font-size: 14px; color: var(--muted); min-height: 22px; }
   #status.err { color: var(--err); } #status.ok { color: var(--accent-green); }
-  #map { height: 560px; border-radius: 12px; border: 1px solid var(--line); background: #0d0f0e; }
+  #map { height: 600px; border-radius: 12px; border: 1px solid var(--line-2); background: #0d0f0e; box-shadow: 0 8px 30px rgba(0,0,0,.35); }
   .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
   .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
-  .tile .k { font: 11px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase; }
-  .tile .v { font: 500 32px/1.1 var(--serif); margin-top: 4px; }
-  .tile .s { font-size: 13px; color: var(--faint); }
-  .legend { display: flex; gap: 18px; font-size: 13px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
+  .tile .k { font: 12px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase; }
+  .tile .v { font: 500 36px/1.1 var(--serif); margin-top: 4px; }
+  .tile .s { font-size: 14px; color: var(--faint); }
+  .legend { display: flex; gap: 18px; font-size: 14px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
+  .map-pin { width: 14px; height: 14px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.6); }
+  .leaflet-control-layers label { font-size: 13px; }
+  .leaflet-tooltip { font: 13px var(--sans); }
   .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
   .legend i.ln { height: 3px; width: 18px; border-radius: 2px; vertical-align: middle; }
   .leaflet-container { font-family: var(--sans); }
@@ -111,21 +114,21 @@
   /* ---------- results: kpis + charts ---------- */
   .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 4px; }
   .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
-  .kpi .k { font: 11px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase; }
-  .kpi .v { font: 500 46px/1.05 var(--serif); margin-top: 6px; }
-  .kpi .s { font-size: 13px; color: var(--faint); margin-top: 2px; }
+  .kpi .k { font: 12px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase; }
+  .kpi .v { font: 500 48px/1.05 var(--serif); margin-top: 6px; }
+  .kpi .s { font-size: 14px; color: var(--faint); margin-top: 2px; }
   .chart { position: relative; width: 100%; }
   .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
   .chart text { font-family: var(--sans); }
-  .axis text { fill: var(--faint); font-size: 11px; font-family: var(--mono); }
+  .axis text { fill: var(--muted); font-size: 12px; font-family: var(--mono); }
   .axis line, .axis path { stroke: var(--line); }
   .grid-line { stroke: var(--line); stroke-dasharray: 2 4; }
   .empty { color: var(--faint); font-size: 14px; padding: 40px 0; text-align: center; }
   #tip { position: fixed; z-index: 2000; pointer-events: none; background: #0b0d0c; border: 1px solid var(--line-2); border-radius: 8px;
          padding: 8px 10px; font-size: 13px; color: var(--text); opacity: 0; transition: opacity .1s; max-width: 260px; }
   #tip b { font-weight: 600; } #tip .t { color: var(--muted); font: 11px var(--mono); }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th { text-align: left; font: 500 11px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid var(--line-2); }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th { text-align: left; font: 500 12px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid var(--line-2); }
   td { padding: 13px 12px; border-bottom: 1px solid var(--line); }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   tr.best td { background: rgba(212,137,90,.07); }
@@ -229,9 +232,12 @@
       <div>
         <div id="map"></div>
         <div class="legend">
-          <span><i style="background:var(--gps);border-radius:50%;width:9px;height:9px"></i>Raw GPS points</span>
-          <span><i class="ln" style="background:var(--s-hmm)"></i>Predicted route (classifier + HMM)</span>
+          <span><i style="background:var(--gps);border-radius:50%;width:11px;height:11px;box-shadow:0 0 0 1.5px #fff"></i>Raw GPS points</span>
+          <span><i class="ln" style="background:var(--s-hmm);height:5px"></i>Predicted route (model + HMM)</span>
           <span><i class="ln" style="background:none;border-top:2px dashed var(--muted)"></i>Gap: route not connected</span>
+          <span><i style="background:#16a34a;border-radius:50%;box-shadow:0 0 0 2px #fff"></i>Start</span>
+          <span><i style="background:#dc2626;border-radius:50%;box-shadow:0 0 0 2px #fff"></i>End</span>
+          <span class="muted">Switch Streets / Satellite / Dark at the top right of the map</span>
         </div>
         <div class="tiles">
           <div class="tile"><div class="k">Right road · + HMM</div><div class="v" id="tHmm">—</div><div class="s" id="tClf">model only —</div></div>
@@ -641,14 +647,25 @@ function fillTrips(list) {
   });
   status(`${list.length} trips ready. Pick one.`);
 }
+let pinLayer;
 function initMap() {
   if (mapReady) { setTimeout(() => map.invalidateSize(), 50); return; }
   map = L.map("map").setView([47.66, 11.04], 12);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { attribution: "&copy; OpenStreetMap &copy; CARTO", maxZoom: 19 }).addTo(map);
-  gpsLayer = L.layerGroup().addTo(map); routeLayer = L.layerGroup().addTo(map);
-  L.control.layers(null, { "Raw GPS points": gpsLayer, "Predicted route": routeLayer }, { collapsed: false }).addTo(map);
+  const bases = {
+    "Streets": L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+      { attribution: "&copy; OpenStreetMap &copy; CARTO", maxZoom: 19 }),
+    "Satellite": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      { attribution: "Imagery &copy; Esri", maxZoom: 19 }),
+    "Dark": L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      { attribution: "&copy; OpenStreetMap &copy; CARTO", maxZoom: 19 }),
+  };
+  bases["Streets"].addTo(map);
+  routeLayer = L.layerGroup().addTo(map); gpsLayer = L.layerGroup().addTo(map); pinLayer = L.layerGroup().addTo(map);
+  L.control.layers(bases, { "Raw GPS points": gpsLayer, "Predicted route": routeLayer, "Start / end": pinLayer }, { collapsed: false }).addTo(map);
+  L.control.scale({ imperial: false }).addTo(map);
   mapReady = true;
 }
+const pin = (color) => L.divIcon({ className: "", html: `<div class="map-pin" style="background:${color}"></div>`, iconSize: [20, 20], iconAnchor: [10, 10] });
 async function run(id, btn) {
   initMap();
   document.querySelectorAll(".trip").forEach(b => { b.classList.remove("active"); b.disabled = true; });
@@ -661,12 +678,19 @@ async function run(id, btn) {
   document.querySelectorAll(".trip").forEach(b => b.disabled = false);
 }
 function draw(res) {
-  gpsLayer.clearLayers(); routeLayer.clearLayers();
-  res.gps_points.forEach(p => L.circleMarker(p, { radius: 2.2, color: css("--gps"), weight: 0, fillOpacity: .85 }).addTo(gpsLayer));
-  res.predicted_route.forEach(line => L.polyline(line, { color: css("--s-hmm"), weight: 4, opacity: .95 }).addTo(routeLayer));
+  gpsLayer.clearLayers(); routeLayer.clearLayers(); pinLayer.clearLayers();
+  // route: dark casing underneath + bright orange line on top, visible on any basemap
+  res.predicted_route.forEach(line => L.polyline(line, { color: "#2b1206", weight: 9, opacity: .55, lineCap: "round", lineJoin: "round" }).addTo(routeLayer));
+  res.predicted_route.forEach(line => L.polyline(line, { color: css("--s-hmm"), weight: 5, opacity: 1, lineCap: "round", lineJoin: "round" }).addTo(routeLayer));
   for (let i = 1; i < res.predicted_route.length; i++) {
     const a = res.predicted_route[i - 1], b = res.predicted_route[i];
-    L.polyline([a[a.length - 1], b[0]], { color: css("--muted"), weight: 2, dashArray: "4 6", opacity: .8 }).addTo(routeLayer);
+    L.polyline([a[a.length - 1], b[0]], { color: "#555b55", weight: 2.5, dashArray: "5 7", opacity: .9 }).addTo(routeLayer);
+  }
+  // GPS points: darker, bigger, thin white ring so they read on streets, satellite and dark
+  res.gps_points.forEach(p => L.circleMarker(p, { radius: 3.6, color: "#ffffff", weight: 1, fillColor: css("--gps"), fillOpacity: .95 }).addTo(gpsLayer));
+  if (res.gps_points.length) {
+    L.marker(res.gps_points[0], { icon: pin("#16a34a") }).bindTooltip("Start").addTo(pinLayer);
+    L.marker(res.gps_points[res.gps_points.length - 1], { icon: pin("#dc2626") }).bindTooltip("End").addTo(pinLayer);
   }
   const bounds = L.latLngBounds(res.gps_points);
   if (bounds.isValid()) map.fitBounds(bounds, { padding: [24, 24] });
