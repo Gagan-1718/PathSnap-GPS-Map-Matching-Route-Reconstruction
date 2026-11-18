@@ -55,7 +55,8 @@ def evaluate(split="student_test", params=None, model_names=None):
     df = load_split(split, labelled_only=False)
     trips = {t: prepare_trip(split, t) for t in df["trip_id"].unique()}
     rows = []
-    for name in model_names or MODELS:
+    names = model_names or (list(MODELS) + [f"{m}_tuned" for m in MODELS])
+    for name in names:
         path = ROOT / "saved_models" / f"{name}.joblib"
         if not path.exists():
             continue
