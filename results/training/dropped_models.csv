@@ -1,0 +1,2 @@
+model,family,params,cv_macro_f1,cv_top1_accuracy,cv_log_loss,cv_inference_time_s_per_fold,test_top1_accuracy,test_macro_f1,model_file_mb,reason_dropped
+knn,Instance-based,"{""n_neighbors"": 25, ""weights"": ""distance""}",0.9210508663311876,0.8802869221125397,0.1574051757378971,132.55509967803954,0.894520980124093,0.9299467438945672,210.6,Similar accuracy to tree models but 210 MB model file (over GitHub limit) and ~130 s inference per CV fold vs <1 s for tree models
