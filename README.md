@@ -1,4 +1,4 @@
-﻿# PathSnap â€“ GPS Map-Matching & Route Reconstruction
+# PathSnap â€“ GPS Map-Matching & Route Reconstruction
 
 Noisy GPS points often drift off the road. PathSnap snaps each GPS point to the road segment the vehicle was really on.
 It uses a machine-learning classifier to score nearby road segments, then an HMM + Viterbi decoder to turn those scores into one connected route.
