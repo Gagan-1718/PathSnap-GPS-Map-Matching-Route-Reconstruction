@@ -17,7 +17,7 @@ from hmm_viterbi.evaluate_hmm import classifier_only, load_params, route_scores
 from hmm_viterbi.hmm import decode_trip
 from model_evaluation.metrics import route_continuity
 
-CONFIG = json.loads((ROOT / "deployment" / "config.json").read_text())
+CONFIG = json.loads((ROOT / "deployment" / "config.json").read_text(encoding="utf-8-sig"))
 MODEL_DIR = ROOT / "saved_models"
 
 
