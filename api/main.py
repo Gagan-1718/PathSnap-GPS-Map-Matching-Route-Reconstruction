@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 from api.pipeline import (CONFIG, available_trips, gps_points, load_models, predict_trip,
                           route_geometry, score_prediction)
-from api.summary import dataset_summary, model_rows
+from api.summary import chart_data, dataset_summary, model_rows
 from hmm_viterbi.evaluate_hmm import load_params
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
@@ -51,7 +51,9 @@ def models():
 @app.get("/summary")
 def summary():
     """Experiment results for the models on show (aggregate metrics only)."""
-    return {"default_model": DEFAULT_MODEL, "models": model_rows(list(MODELS)), "dataset": dataset_summary()}
+    names = list(MODELS)
+    return {"default_model": DEFAULT_MODEL, "models": model_rows(names), "dataset": dataset_summary(),
+            "charts": chart_data(names, DEFAULT_MODEL)}
 
 
 @app.get("/trips")

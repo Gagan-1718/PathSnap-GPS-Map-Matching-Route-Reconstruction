@@ -58,6 +58,48 @@ def model_rows(names):
     return rows
 
 
+def chart_data(names, default_model):
+    """Series for the UI charts: CV folds, per-trip HMM effect, tuning history."""
+    out = {"folds": {}, "per_trip": [], "hpo": None}
+    folds = _read(RES / "training" / "cv_folds.csv")
+    if folds is not None:
+        for name in names:
+            f = folds[folds["model"] == name].sort_values("fold")
+            if len(f):
+                out["folds"][name] = {"val": f["macro_f1"].round(4).tolist(),
+                                      "train": f["train_macro_f1"].round(4).tolist()}
+    per_trip = _read(RES / "hmm" / "classifier_vs_hmm_per_trip.csv", dtype={"trip_id": str})
+    if per_trip is not None:
+        p = per_trip[per_trip["model"] == default_model]
+        piv = p.pivot(index="trip_id", columns="method", values="top1_accuracy")
+        cont = p.pivot(index="trip_id", columns="method", values="route_continuity")
+        for tid in piv.index:
+            out["per_trip"].append({"trip_id": tid,
+                                    "clf_top1": _clean(float(piv.loc[tid, "classifier_only"])),
+                                    "hmm_top1": _clean(float(piv.loc[tid, "classifier_plus_hmm"])),
+                                    "clf_continuity": _clean(float(cont.loc[tid, "classifier_only"])),
+                                    "hmm_continuity": _clean(float(cont.loc[tid, "classifier_plus_hmm"]))})
+    tuned = [n for n in names if n.endswith("_tuned")]
+    if tuned:
+        base = tuned[0].removesuffix("_tuned")
+        trials = _read(RES / "hpo" / f"{base}_trials.csv")
+        comp = _read(RES / "hpo" / f"{base}_untuned_vs_tuned.csv")
+        space = RES / "hpo" / f"{base}_search_space.json"
+        if trials is not None:
+            vals = trials["value"].round(4).tolist()
+            params = [c for c in trials.columns if c.startswith("params_")]
+            out["hpo"] = {
+                "model": base, "trials": vals,
+                "best_so_far": pd.Series(vals).cummax().round(4).tolist(),
+                "trial_params": trials[params].rename(columns=lambda c: c[7:]).to_dict("records"),
+                "space": json.loads(space.read_text()) if space.exists() else None,
+                "comparison": None if comp is None else [
+                    {k: _clean(v.item() if hasattr(v, "item") else v) for k, v in r.items()}
+                    for r in comp.to_dict("records")],
+            }
+    return out
+
+
 def dataset_summary():
     split = _read(RES / "eda" / "split_summary.csv")
     out = {}
