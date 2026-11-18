@@ -15,19 +15,23 @@ Built for the UE24CS352A Machine Learning Hackathon (PES University, RR Campus).
 
 ## Folder structure
 
-```
-pathsnap/
-├── data/            # raw dataset (train: 80 trips, student_test: 10 trips)
-│   └── <trip_id>/   # .track  .nodes  .arcs  .route
-├── docs/            # hackathon guideline PDFs
-├── src/             # data processing, features, models, HMM/Viterbi
-├── notebooks/       # EDA and experiments
-├── models/          # saved model weights and configs
-├── results/         # experiment logs, CSVs, plots, Folium maps
-├── api/             # FastAPI backend (Laptop 1)
-├── ui/              # evaluator interface (Laptop 2)
-└── report/          # final technical report (PDF)
-```
+Folders follow the required deliverable components.
+
+| Folder | Deliverable | Main files |
+|---|---|---|
+| `data_processing/` | Read, inspect, clean, preprocess | `load_data.py`, `explore_data.py` |
+| `feature_engineering/` | Candidate generation, features, labels | `candidates.py`, `features.py`, `build_dataset.py` |
+| `model_training/` | Training for every model | `train_models.py` |
+| `model_evaluation/` | Metrics, model comparison | `metrics.py`, `evaluate_models.py` |
+| `hyperparameter_optimisation/` | Bayesian optimisation (Optuna TPE) | `bayes_opt.py` |
+| `hmm_viterbi/` | Route reconstruction and decoding | `hmm.py`, `tune_decoder.py`, `evaluate_hmm.py` |
+| `api/` | FastAPI backend and model loading | `main.py`, `pipeline.py` |
+| `ui/` | Evaluator interface | `index.html` |
+| `deployment/` | Config, run scripts, instructions | `config.json`, `run_api.bat`, `run_ui.bat`, `DEPLOYMENT.md` |
+| `visualisations/` | Folium maps and plots | `folium_maps.py`, `plots.py` |
+| `saved_models/` | Trained weights and configs | `*.joblib`, `*_config.json`, `hmm_params.json` |
+| `results/` | CSVs, logs, plots, maps | `eda/`, `features/`, `training/`, `evaluation/`, `hpo/`, `hmm/`, `plots/`, `maps/` |
+| `data/` | Raw dataset (not committed) | see `data/README.md` |
 
 ## Data format
 
@@ -48,7 +52,25 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## Running
+Then place the dataset in `data/` (see [data/README.md](data/README.md)).
+
+## Reproducing the results
+
+Run from the repository root, in this order. You can also run `deployment\run_pipeline.bat` to do all of it.
+
+```bash
+python -m data_processing.explore_data            # dataset inventory and quality checks
+python -m feature_engineering.build_dataset       # candidates, features, labels
+python -m model_training.train_models             # 5 models, 5-fold GroupKFold CV
+python -m model_evaluation.evaluate_models        # student-test comparison
+python -m hmm_viterbi.tune_decoder random_forest  # decoder penalties (training trips only)
+python -m hyperparameter_optimisation.bayes_opt random_forest 25
+python -m hmm_viterbi.evaluate_hmm                # classifier-only vs classifier + HMM
+python -m visualisations.plots                    # plots in results/plots
+python -m visualisations.folium_maps random_forest_tuned   # maps in results/maps
+```
+
+## Running the system (two laptops)
 
 **Laptop 1: API**
 ```bash
@@ -56,9 +78,24 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000
 ```
 
 **Laptop 2: UI**
-Open the UI and set the API address to `http://<laptop-1-ip>:8000`.
+```bash
+cd ui && python -m http.server 5500     # then open http://localhost:5500
+```
+Enter `http://<laptop-1-ip>:8000`, press **Connect** and pick a trip.
 
-Both laptops must be on the same network.
+Full steps, including the firewall and evaluator trips, are in [deployment/DEPLOYMENT.md](deployment/DEPLOYMENT.md).
+
+## Models compared
+
+| # | Model | Family |
+|---|---|---|
+| 1 | Logistic Regression | Linear / probabilistic |
+| 2 | Decision Tree | Tree-based |
+| 3 | Gaussian Naive Bayes | Probabilistic |
+| 4 | K-Nearest Neighbours | Instance-based |
+| 5 | Random Forest | Ensemble |
+
+Results are in `results/training/cv_summary.csv`, `results/evaluation/student_test_metrics.csv` and `results/hmm/classifier_vs_hmm.csv`.
 
 ## Evaluation rules we follow
 
