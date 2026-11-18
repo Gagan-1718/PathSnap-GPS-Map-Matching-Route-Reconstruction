@@ -5,7 +5,7 @@ python -m feature_engineering.build_dataset || exit /b 1
 python -m model_training.train_models || exit /b 1
 python -m model_evaluation.evaluate_models || exit /b 1
 python -m hmm_viterbi.tune_decoder random_forest || exit /b 1
-python -m hyperparameter_optimisation.bayes_opt random_forest 20 || exit /b 1
+python -m hyperparameter_optimisation.bayes_opt decision_tree 20 || exit /b 1
 python -m hmm_viterbi.evaluate_hmm || exit /b 1
 python -m visualisations.plots || exit /b 1
-python -m visualisations.folium_maps random_forest_tuned || exit /b 1
+python -m visualisations.folium_maps decision_tree || exit /b 1
