@@ -1,4 +1,4 @@
-# PathSnap â€“ GPS Map-Matching & Route Reconstruction
+# PathSnap – GPS Map-Matching & Route Reconstruction
 
 Noisy GPS points often drift off the road. PathSnap snaps each GPS point to the road segment the vehicle was really on.
 It uses a machine-learning classifier to score nearby road segments, then an HMM + Viterbi decoder to turn those scores into one connected route.
@@ -56,7 +56,7 @@ Then place the dataset in `data/` (see [data/README.md](data/README.md)).
 
 ## Reproducing the results
 
-**Google Colab:** open [PathSnap_Colab.ipynb](PathSnap_Colab.ipynb) â†’
+**Google Colab:** open [PathSnap_Colab.ipynb](PathSnap_Colab.ipynb) →
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Gagan-1718/PathSnap-GPS-Map-Matching-Route-Reconstruction/blob/feat/pathsnap-pipeline/PathSnap_Colab.ipynb).
 It clones this repo, asks you to upload the dataset zip, and runs every stage below with its outputs.
 
@@ -65,13 +65,13 @@ It clones this repo, asks you to upload the dataset zip, and runs every stage be
 ```bash
 python -m data_processing.explore_data            # dataset inventory and quality checks
 python -m feature_engineering.build_dataset       # candidates, features, labels
-python -m model_training.train_models             # 5 models, 5-fold GroupKFold CV
+python -m model_training.train_models             # 6 models, 5-fold GroupKFold CV
 python -m model_evaluation.evaluate_models        # student-test comparison
 python -m hmm_viterbi.tune_decoder random_forest  # decoder penalties (training trips only)
-python -m hyperparameter_optimisation.bayes_opt random_forest 20
+python -m hyperparameter_optimisation.bayes_opt decision_tree 20
 python -m hmm_viterbi.evaluate_hmm                # classifier-only vs classifier + HMM
 python -m visualisations.plots                    # plots in results/plots
-python -m visualisations.folium_maps random_forest_tuned   # maps in results/maps
+python -m visualisations.folium_maps decision_tree   # maps in results/maps
 ```
 
 ## Running the system (two laptops)
@@ -91,15 +91,23 @@ Full steps, including the firewall and evaluator trips, are in [deployment/DEPLO
 
 ## Models compared
 
-| # | Model | Family |
-|---|---|---|
-| 1 | Logistic Regression | Linear / probabilistic |
-| 2 | Decision Tree | Tree-based |
-| 3 | Gaussian Naive Bayes | Probabilistic |
-| 4 | K-Nearest Neighbours | Instance-based |
-| 5 | Random Forest | Ensemble |
+"Right road" means the share of GPS points matched to the correct road on the 10 student-test trips. CV uses 80 training trips with 5-fold GroupKFold by trip.
 
-Results are in `results/training/cv_summary.csv`, `results/evaluation/student_test_metrics.csv` and `results/hmm/classifier_vs_hmm.csv`.
+| # | Model | Family | CV right road | Test: model only | Test: + HMM | Connected route + HMM |
+|---|---|---|---|---|---|---|
+| 1 | Logistic Regression | Linear | 87.8% | 87.9% | 88.9% | 87.4% |
+| 2 | Gaussian Naive Bayes | Probabilistic | 86.9% | 86.3% | 88.1% | 87.6% |
+| 3 | **Decision Tree (final)** | Tree | **89.1%** | 90.1% | **91.8%** | 87.2% |
+| 4 | K-Nearest Neighbours | Instance-based | 88.0% | 89.5% | 90.6% | 86.4% |
+| 5 | Random Forest | Ensemble (bagging) | 89.1% | 90.2% | 91.8% | 86.7% |
+| 6 | LightGBM | Boosting | 89.1% | 90.3% | 91.5% | 87.0% |
+
+**Final model: Decision Tree.** It has the best CV score and the best test accuracy with HMM. It's also the smallest and fastest model, and the easiest to explain. Bayesian optimisation (Optuna TPE, 20 trials) didn't beat its starting settings, so the untuned version is kept. See `results/hpo/`.
+
+**HMM + Viterbi** improves every model: route continuity rises from about 68–74% (model only) to 86–88%.
+
+Sources: `results/training/cv_summary.csv`, `results/evaluation/student_test_metrics.csv`, `results/hmm/classifier_vs_hmm.csv`.
+KNN's model file (210 MB) is too large for GitHub. Rebuild it with `python -m model_training.train_models knn`.
 
 ## Evaluation rules we follow
 
