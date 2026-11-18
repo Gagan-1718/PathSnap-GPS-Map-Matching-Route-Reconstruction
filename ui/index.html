@@ -471,12 +471,12 @@ function roundedBar(svg, x, y, w, h, color) {
 /* grouped bars: categories x series, values 0..1 */
 function groupedBars(container, cats, series, opt = {}) {
   if (!cats.length || series.every(s => s.values.every(v => v == null))) { container.innerHTML = '<div class="empty">No results yet. Run the HMM evaluation.</div>'; return; }
-  const { svg, w, h } = frame(container, 280);
-  const m = { l: 44, r: 8, t: 22, b: 44 };
+  const { svg, w, h } = frame(container, 230);
+  const m = { l: 40, r: 6, t: 20, b: 40 };
   const lo = opt.min ?? 0, hi = 1;
   const y = v => m.t + (h - m.t - m.b) * (1 - (v - lo) / (hi - lo));
   yAxis(svg, m.l, w - m.r, y, opt.ticks || [0, .25, .5, .75, 1], t => Math.round(t * 100) + "%");
-  const gw = (w - m.l - m.r) / cats.length, bw = Math.min(42, (gw * .62) / series.length), gap = 2;
+  const gw = (w - m.l - m.r) / cats.length, bw = Math.min(16, (gw * .5) / series.length), gap = 2;
   cats.forEach((c, i) => {
     const cx = m.l + gw * i + gw / 2, total = series.length * bw + (series.length - 1) * gap;
     series.forEach((s, j) => {
@@ -485,18 +485,20 @@ function groupedBars(container, cats, series, opt = {}) {
       roundedBar(svg, x, y(v), bw, y(lo) - y(v), s.color);
       // selective labels: only the last series (the "with HMM" value) gets a number on top
       if (j === series.length - 1) {
-        const lbl = el("text", { x: cx, y: y(Math.max(...series.map(q => q.values[i] ?? 0))) - 7, "text-anchor": "middle", fill: css("--text"), "font-size": 12, "font-weight": 600 }, svg);
+        const lbl = el("text", { x: cx, y: y(Math.max(...series.map(q => q.values[i] ?? 0))) - 6, "text-anchor": "middle", fill: css("--text"), "font-size": 11, "font-weight": 600 }, svg);
         lbl.textContent = (v * 100).toFixed(1);
       }
       const hit = el("rect", { x: x - 2, y: m.t, width: bw + 4, height: h - m.t - m.b, fill: "transparent" }, svg);
-      hit.addEventListener("mousemove", e => showTip(e, `<div class="t">${c}</div>${series.map(q => `${q.name}: <b>${pct(q.values[i])}</b>`).join("<br>")}`));
+      hit.addEventListener("mousemove", e => showTip(e, `<div class="t">${c.replace("\n", " ")}</div>${series.map(q => `${q.name}: <b>${pct(q.values[i])}</b>`).join("<br>")}`));
       hit.addEventListener("mouseleave", hideTip);
     });
     // category name on up to two lines so long names never collide
     const words = c.split(" "), half = Math.ceil(words.length / 2);
-    const lines = words.length > 1 ? [words.slice(0, half).join(" "), words.slice(half).join(" ")] : [c];
-    const t = el("text", { x: cx, y: h - 26, "text-anchor": "middle", fill: css("--muted"), "font-size": 12 }, svg);
-    lines.forEach((ln, k) => { const ts = el("tspan", { x: cx, dy: k ? 14 : 0 }, t); ts.textContent = ln; });
+    const lines = c.includes("\n") ? c.split("\n")
+      : words.length > 1 ? [words.slice(0, half).join(" "), words.slice(half).join(" ")] : [c];
+    const t = el("text", { x: cx, y: h - 24, "text-anchor": "middle", fill: opt.highlight === i ? css("--text") : css("--muted"),
+      "font-size": 11, "font-weight": opt.highlight === i ? 600 : 400 }, svg);
+    lines.forEach((ln, k) => { const ts = el("tspan", { x: cx, dy: k ? 13 : 0 }, t); ts.textContent = ln; });
   });
 }
 
@@ -622,14 +624,18 @@ function drawCharts() {
   const best = summary.default_model;
   // same order as the table: final model first, then best "with HMM" first
   const rows = [...summary.models].sort((a, b) => (b.model === best) - (a.model === best) || (b.hmm_top1 ?? 0) - (a.hmm_top1 ?? 0));
-  const cats = rows.map(r => short(r.model));
+  // short two-line names for the vertical bars
+  const SHORT_V = { lightgbm_tuned: "LightGBM\ntuned ★", decision_tree: "Decision Tree", random_forest: "Random Forest",
+    lightgbm: "LightGBM", knn: "KNN", logistic_regression: "Logistic Reg.", gaussian_naive_bayes: "Naive Bayes",
+    decision_tree_tuned: "Dec. Tree tuned" };
+  const cats = rows.map(r => SHORT_V[r.model] || short(r.model));
   const opt = { highlight: rows.findIndex(r => r.model === best) };
   const pairs = (a, b) => [
     { name: "Model only", color: css("--s-clf"), values: rows.map(r => r[a]) },
     { name: "Model + HMM", color: css("--s-hmm"), values: rows.map(r => r[b]) }];
-  hBars($("chTop1"), cats, pairs("clf_top1", "hmm_top1"), opt);
-  hBars($("chCont"), cats, pairs("clf_continuity", "hmm_continuity"), opt);
-  hBars($("chRoute"), cats, pairs("clf_route_f1", "hmm_route_f1"), opt);
+  groupedBars($("chTop1"), cats, pairs("clf_top1", "hmm_top1"), opt);
+  groupedBars($("chCont"), cats, pairs("clf_continuity", "hmm_continuity"), opt);
+  groupedBars($("chRoute"), cats, pairs("clf_route_f1", "hmm_route_f1"), opt);
 }
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (summary && pages[current].dataset.title === "Results") drawCharts(); }, 150); });
 
