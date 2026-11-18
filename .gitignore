@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Dataset (too large for git, ~90 MB) - see data/README.md
+data/*
+!data/README.md
+
+# Hackathon handout PDFs
+docs/*.pdf
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
