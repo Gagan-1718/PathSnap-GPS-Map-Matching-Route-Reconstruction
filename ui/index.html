@@ -235,7 +235,6 @@
     <div class="try">
       <div class="side">
         <div class="group"><label for="model">Model</label><select id="model"></select></div>
-        <div class="group"><label for="cmpModel">Compare with (optional)</label><select id="cmpModel"></select></div>
         <div class="group"><label>Trips</label><div class="trips" id="trips"></div></div>
         <div id="status"></div>
       </div>
@@ -243,13 +242,10 @@
         <div id="map"></div>
         <div class="legend">
           <span><i style="background:var(--gps);border-radius:50%;width:11px;height:11px;box-shadow:0 0 0 1.5px #fff"></i>Raw GPS points</span>
-          <span><i class="ln" style="background:var(--s-hmm);height:5px"></i>Route: model + HMM</span>
-          <span><i class="ln" style="background:none;border-top:3px dashed var(--s-clf)"></i>Route: model only (turn on in the map box)</span>
-          <span><i class="ln" style="background:var(--s-m2);height:7px"></i>Route: compare model</span>
+          <span><i class="ln" style="background:var(--s-hmm);height:5px"></i>Predicted route</span>
           <span><i class="ln" style="background:none;border-top:2px dashed var(--muted)"></i>Gap: route not connected</span>
           <span><i style="background:#16a34a;border-radius:50%;box-shadow:0 0 0 2px #fff"></i>Start</span>
           <span><i style="background:#dc2626;border-radius:50%;box-shadow:0 0 0 2px #fff"></i>End</span>
-          <span class="muted">Switch Streets / Satellite / Dark at the top right of the map</span>
         </div>
         <div class="tiles">
           <div class="tile"><div class="k">Right road · + HMM</div><div class="v" id="tHmm">—</div><div class="s" id="tClf">model only —</div></div>
@@ -257,7 +253,6 @@
           <div class="tile"><div class="k">Route match</div><div class="v" id="tF1">—</div><div class="s" id="tPR">overlap with the real route</div></div>
           <div class="tile"><div class="k">Inference</div><div class="v" id="tTime">—</div><div class="s" id="tPts">GPS points</div></div>
         </div>
-        <div class="tiles" id="cmpBox" style="display:none"></div>
       </div>
     </div>
   </section>
@@ -332,7 +327,7 @@
     <div class="lanes"><span>training: steps 01–05 on 80 trips</span><span>evaluation: 01–06 on 10 student-test trips</span><span>API: 01–07 per request</span></div>
 
     <div class="grid3">
-      <div class="card"><h4>Why metres?</h4><p class="small" style="margin:6px 0 0">At this latitude, one degree of longitude is about 75 km but one degree of latitude is about 111 km. Over a few kilometres, a local flat projection gives accurate metres.</p></div>
+      <div class="card"><h4>Why metres?</h4><p class="small" style="margin:6px 0 0">The trips are spread around the world. A degree of longitude shrinks away from the equator (about 111 km at 0°, 75 km at 47°N), so degrees can't be used as distance. Each trip gets its own local flat projection in metres, which is accurate over a few kilometres.</p></div>
       <div class="card"><h4>How are labels made?</h4><p class="small" style="margin:6px 0 0">The route lists arcs in driving order, not one per point. Each point's label is the nearest route arc within 30 m, preferring one that points the same way as the car. Points the route doesn't cover are left out.</p></div>
       <div class="card"><h4>What does the classifier see?</h4><p class="small" style="margin:6px 0 0">One row per (GPS point, candidate road) pair, answering: is this the true road, yes or no? For each GPS point, the road with the highest score is the model's pick.</p></div>
     </div>
@@ -645,13 +640,11 @@ function fillOverview() {
 /* ---------- try it ---------- */
 function fillModels(h) {
   $("model").innerHTML = "";
-  $("cmpModel").innerHTML = '<option value="">— none —</option>';
   h.models.forEach(m => {
     const o = document.createElement("option");
     o.value = m; o.textContent = pretty(m) + (m === h.default_model ? "  (final)" : "");
     o.selected = m === h.default_model;
     $("model").appendChild(o);
-    const c = o.cloneNode(true); c.selected = false; $("cmpModel").appendChild(c);
   });
 }
 function fillTrips(list) {
@@ -663,7 +656,7 @@ function fillTrips(list) {
   });
   status(`${list.length} trips ready. Pick one.`);
 }
-let pinLayer, clfLayer, cmpLayer;
+let pinLayer;
 function initMap() {
   if (mapReady) { setTimeout(() => map.invalidateSize(), 50); return; }
   map = L.map("map").setView([47.66, 11.04], 12);
@@ -677,10 +670,8 @@ function initMap() {
       { attribution: "&copy; Esri", maxZoom: 16 }),
   };
   bases["Streets"].addTo(map);
-  clfLayer = L.layerGroup(); cmpLayer = L.layerGroup().addTo(map);
   routeLayer = L.layerGroup().addTo(map); gpsLayer = L.layerGroup().addTo(map); pinLayer = L.layerGroup().addTo(map);
-  L.control.layers(bases, { "Raw GPS points": gpsLayer, "Route: model + HMM": routeLayer, "Route: model only (no HMM)": clfLayer,
-    "Route: compare model": cmpLayer, "Start / end": pinLayer }, { collapsed: false }).addTo(map);
+  L.control.layers(bases, null, { collapsed: false }).addTo(map);   // basemap switch only
   L.control.scale({ imperial: false }).addTo(map);
   mapReady = true;
 }
@@ -689,21 +680,15 @@ async function run(id, btn) {
   initMap();
   document.querySelectorAll(".trip").forEach(b => { b.classList.remove("active"); b.disabled = true; });
   btn.classList.add("active");
-  const main = $("model").value, other = $("cmpModel").value;
-  status(`Running trip ${id} on ${pretty(main)}${other ? " and " + pretty(other) : ""}…`);
-  const call = (m) => getJSON("/predict", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trip_id: id, model: m }) });
+  status(`Running trip ${id} on ${pretty($("model").value)}…`);
   try {
-    const [res, cmp] = await Promise.all([call(main), other && other !== main ? call(other) : null]);
-    draw(res, cmp); status(`Trip ${id} done in ${res.inference_time_s}s.`, "ok");
+    const res = await getJSON("/predict", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trip_id: id, model: $("model").value }) });
+    draw(res); status(`Trip ${id} done in ${res.inference_time_s}s.`, "ok");
   } catch (e) { status("Error: " + e.message, "err"); }
   document.querySelectorAll(".trip").forEach(b => b.disabled = false);
 }
-function draw(res, cmp) {
-  gpsLayer.clearLayers(); routeLayer.clearLayers(); pinLayer.clearLayers(); clfLayer.clearLayers(); cmpLayer.clearLayers();
-  // model only (no HMM): thin blue dashed line - shows the jumps the HMM removes
-  (res.classifier_only_route || []).forEach(line => L.polyline(line, { color: css("--s-clf"), weight: 3, opacity: .95, dashArray: "6 5" }).addTo(clfLayer));
-  // comparison model (+ HMM): wide violet line underneath, so differences show as violet next to orange
-  if (cmp) cmp.predicted_route.forEach(line => L.polyline(line, { color: css("--s-m2"), weight: 11, opacity: .75, lineCap: "round", lineJoin: "round" }).addTo(cmpLayer));
+function draw(res) {
+  gpsLayer.clearLayers(); routeLayer.clearLayers(); pinLayer.clearLayers();
   // route: dark casing underneath + bright orange line on top, visible on any basemap
   res.predicted_route.forEach(line => L.polyline(line, { color: "#2b1206", weight: 9, opacity: .55, lineCap: "round", lineJoin: "round" }).addTo(routeLayer));
   res.predicted_route.forEach(line => L.polyline(line, { color: css("--s-hmm"), weight: 5, opacity: 1, lineCap: "round", lineJoin: "round" }).addTo(routeLayer));
@@ -724,19 +709,6 @@ function draw(res, cmp) {
   $("tCont").textContent = pct(m.route_continuity); $("tContClf").textContent = `model only ${pct(m.classifier_only_route_continuity)}`;
   $("tF1").textContent = pct(m.route_f1); $("tPR").textContent = "overlap with the real route";
   $("tTime").textContent = res.inference_time_s + "s"; $("tPts").textContent = `${res.gps_point_count} GPS points · ${res.predicted_segments} segments`;
-  // comparison panel: how often the two models pick the same road (predictions only)
-  const box = $("cmpBox");
-  if (!cmp) { box.style.display = "none"; return; }
-  const other = new Map(cmp.point_ids.map((p, i) => [p, cmp.point_arcs[i]]));
-  let same = 0, n = 0;
-  res.point_ids.forEach((p, i) => { if (other.has(p)) { n++; if (other.get(p) === res.point_arcs[i]) same++; } });
-  const c = cmp.metrics || {};
-  box.style.display = "grid";
-  box.innerHTML = `
-    <div class="tile"><div class="k">Same road chosen</div><div class="v">${pct(n ? same / n : null)}</div><div class="s">${pretty(res.model)} vs ${pretty(cmp.model)} · ${n - same} points differ</div></div>
-    <div class="tile"><div class="k">Right road · ${pretty(cmp.model)}</div><div class="v">${pct(c.top1_accuracy)}</div><div class="s">vs ${pct(m.top1_accuracy)} for ${pretty(res.model)}</div></div>
-    <div class="tile"><div class="k">Connected · ${pretty(cmp.model)}</div><div class="v">${pct(c.route_continuity)}</div><div class="s">vs ${pct(m.route_continuity)} for ${pretty(res.model)}</div></div>
-    <div class="tile"><div class="k">Where they differ</div><div class="v" style="font-size:20px;line-height:1.3;margin-top:8px">Violet next to orange</div><div class="s">zoom in to see it</div></div>`;
 }
 
 /* ---------- results ---------- */
