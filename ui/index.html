@@ -15,7 +15,7 @@
     --accent-green: #9fbf8c; --accent-orange: #d4895a; --err: #e66767;
     /* chart series (validated for the dark surface with the dataviz palette checker) */
     --s-clf: #3987e5; --s-hmm: #d95926;
-    --s-m1: #199e70; --s-m2: #9085e9; --s-m3: #c98500;
+    --s-m1: #199e70; --s-m2: #9085e9; --s-m3: #c98500; --s-m4: #d55181; --s-m5: #0ca30c; --s-m6: #e66767;
     --gps: #7fb0e0;
     --serif: "Cormorant Garamond", Georgia, serif;
     --sans: "IBM Plex Sans", system-ui, sans-serif;
@@ -373,7 +373,7 @@ const $ = (id) => document.getElementById(id);
 const pages = [...document.querySelectorAll("section.page")];
 let current = 0, summary = null, mapReady = false, map, gpsLayer, routeLayer;
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-const MODEL_COLORS = ["--s-m1", "--s-m2", "--s-m3"];
+const MODEL_COLORS = ["--s-m1", "--s-m2", "--s-m3", "--s-m4", "--s-m5", "--s-m6"];
 
 /* ---------- navigation ---------- */
 pages.forEach((p, i) => {
@@ -406,9 +406,10 @@ document.addEventListener("keydown", (e) => {
 /* ---------- helpers ---------- */
 const pct = (x, d = 1) => x == null ? "—" : (100 * x).toFixed(d) + "%";
 const num = (x, d = 3) => x == null ? "—" : Number(x).toFixed(d);
-const pretty = (m) => m.replace(/_tuned$/, "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) + (m.endsWith("_tuned") ? " · tuned" : "");
+const NAMES = { knn: "KNN", lightgbm: "LightGBM", gaussian_naive_bayes: "Gaussian Naive Bayes" };
+const pretty = (m) => { const b = m.replace(/_tuned$/, ""); return (NAMES[b] || b.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())) + (m.endsWith("_tuned") ? " · tuned" : ""); };
 const short = (m) => ({ logistic_regression: "Log. Regression", decision_tree: "Decision Tree", decision_tree_tuned: "Dec. Tree · tuned",
-  random_forest: "Random Forest", random_forest_tuned: "Rand. Forest · tuned", gaussian_naive_bayes: "Naive Bayes", knn: "KNN" })[m] || pretty(m);
+  random_forest: "Random Forest", random_forest_tuned: "Rand. Forest · tuned", gaussian_naive_bayes: "Naive Bayes", knn: "KNN", lightgbm: "LightGBM" })[m] || pretty(m);
 const api = () => $("api").value.replace(/\/+$/, "");
 function status(msg, cls = "") { $("status").textContent = msg; $("status").className = cls; }
 async function getJSON(path, opts) {
@@ -416,7 +417,9 @@ async function getJSON(path, opts) {
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
   return r.json();
 }
-const modelColor = (name) => css(MODEL_COLORS[summary.models.findIndex(m => m.model === name) % 3] || "--s-m1");
+// colour follows the model (fixed order), never its rank on screen
+const MODEL_ORDER = ["logistic_regression", "decision_tree", "gaussian_naive_bayes", "knn", "random_forest", "lightgbm"];
+const modelColor = (name) => css(MODEL_COLORS[Math.max(0, MODEL_ORDER.indexOf(name.replace(/_tuned$/, "")))]);
 
 /* ---------- tooltip ---------- */
 const tip = $("tip");
@@ -722,9 +725,14 @@ const MODEL_INFO = {
     formula: "split = argmin weighted Gini impurity of the two children",
     pros: ["Captures non-linear interactions", "No scaling needed, very fast to predict"],
     cons: ["Overfits if too deep, so depth and leaf size are limited", "Step-like probabilities"] },
-  random_forest: { how: "Many decision trees on random samples and features, averaged.", formula: "P = mean of tree probabilities", pros: ["Stable, strong"], cons: ["Slower, larger file"] },
-  gaussian_naive_bayes: { how: "Assumes features are independent and normally distributed per class.", formula: "P(y|x) ∝ P(y) Π P(x_i|y)", pros: ["Very fast"], cons: ["Independence assumption is broken here"] },
-  knn: { how: "Votes of the 25 most similar training candidates.", formula: "P = weighted share of positive neighbours", pros: ["No training"], cons: ["Very slow to predict, large model"] },
+  random_forest: { how: "Many decision trees, each built on a random sample of rows and features. Their probabilities are averaged.",
+    formula: "P = average of 100 trees' probabilities", pros: ["More stable than one tree", "Hard to overfit"], cons: ["Slower and a bigger file (20 MB)", "Harder to explain"] },
+  lightgbm: { how: "Builds trees one after another. Each new tree corrects the mistakes of the ones before it (gradient boosting).",
+    formula: "score = tree1 + tree2 + … + tree200, then sigmoid", pros: ["Best probabilities of all models", "Fast on large data"], cons: ["More settings to tune", "Harder to explain"] },
+  gaussian_naive_bayes: { how: "Uses probability rules and assumes each feature is independent, with a bell-curve shape for each class.",
+    formula: "P(road | x) ∝ P(road) · Π P(xᵢ | road)", pros: ["Extremely fast", "Simple"], cons: ["Features here are related (distance and rank), which breaks its assumption"] },
+  knn: { how: "Finds the 25 most similar training examples and lets them vote, with closer ones counting more.",
+    formula: "P = weighted share of the 25 neighbours that were correct", pros: ["No real training step", "Easy idea"], cons: ["Very slow to predict", "210 MB model"] },
 };
 function fillModelCards() {
   $("modelCards").innerHTML = summary.models.map(r => {
