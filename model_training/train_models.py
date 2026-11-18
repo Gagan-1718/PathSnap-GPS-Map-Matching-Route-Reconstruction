@@ -13,8 +13,11 @@ import time
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GroupKFold
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
@@ -39,11 +42,30 @@ MODELS = {
         "params": {"max_depth": 8, "min_samples_leaf": 50},
         "build": lambda p: DecisionTreeClassifier(random_state=SEED, **p),
     },
+    "gaussian_naive_bayes": {
+        "family": "Linear / probabilistic",
+        "params": {"var_smoothing": 1e-9},
+        "build": lambda p: GaussianNB(**p),
+    },
+    "knn": {
+        "family": "Instance-based",
+        "params": {"n_neighbors": 25, "weights": "distance"},
+        "build": lambda p: make_pipeline(StandardScaler(), KNeighborsClassifier(n_jobs=-1, **p)),
+    },
+    "random_forest": {
+        "family": "Ensemble",
+        "params": {"n_estimators": 100, "max_depth": 12, "min_samples_leaf": 20},
+        "build": lambda p: RandomForestClassifier(random_state=SEED, n_jobs=-1, **p),
+    },
 }
 
 
-def load_split(split):
-    return pd.read_pickle(ROOT / "cache" / f"{split}_features.pkl")
+def load_split(split, labelled_only=True):
+    """Candidate table for a split. Unlabelled points (no route arc nearby) are dropped."""
+    df = pd.read_pickle(ROOT / "cache" / f"{split}_features.pkl")
+    if labelled_only:
+        df = df[df["ref_arc"] >= 0].reset_index(drop=True)
+    return df
 
 
 def cross_validate(name, spec, df):
@@ -58,7 +80,11 @@ def cross_validate(name, spec, df):
         prob = model.predict_proba(X[va])[:, 1]
         infer_s = time.time() - t0
         m = all_metrics(df.iloc[va], prob)
-        train_m = all_metrics(df.iloc[tr], model.predict_proba(X[tr])[:, 1])
+        # training-fold score (for over/underfitting checks) on 10 random training trips
+        rng = np.random.default_rng(SEED + fold)
+        sample_trips = rng.choice(np.unique(groups[tr]), size=10, replace=False)
+        ts = tr[np.isin(groups[tr], sample_trips)]
+        train_m = all_metrics(df.iloc[ts], model.predict_proba(X[ts])[:, 1])
         rows.append({"model": name, "fold": fold, **m,
                      "train_macro_f1": train_m["macro_f1"], "train_top1_accuracy": train_m["top1_accuracy"],
                      "train_time_s": train_s, "inference_time_s": infer_s})
@@ -78,7 +104,7 @@ def fit_final(name, spec, df):
     (MODEL_DIR / f"{name}_config.json").write_text(json.dumps(config, indent=2))
 
 
-def main():
+def main(names=None):
     MODEL_DIR.mkdir(exist_ok=True)
     OUT.mkdir(parents=True, exist_ok=True)
     df = load_split("train")
@@ -86,6 +112,8 @@ def main():
 
     rows = []
     for name, spec in MODELS.items():
+        if names and name not in names:
+            continue
         rows += cross_validate(name, spec, df)
         fit_final(name, spec, df)
 
@@ -98,4 +126,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(sys.argv[1:] or None)
