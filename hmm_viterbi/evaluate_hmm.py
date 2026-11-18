@@ -55,7 +55,8 @@ def evaluate(split="student_test", params=None, model_names=None):
     df = load_split(split, labelled_only=False)
     trips = {t: prepare_trip(split, t) for t in df["trip_id"].unique()}
     rows = []
-    for name in model_names or MODELS:
+    names = model_names or (list(MODELS) + [f"{m}_tuned" for m in MODELS])
+    for name in names:
         path = ROOT / "saved_models" / f"{name}.joblib"
         if not path.exists():
             continue
@@ -89,9 +90,9 @@ def summarise(per_trip):
     return s.reset_index()
 
 
-def main():
+def main(names=None):
     OUT.mkdir(parents=True, exist_ok=True)
-    per_trip = evaluate()
+    per_trip = evaluate(model_names=names)
     per_trip.to_csv(OUT / "classifier_vs_hmm_per_trip.csv", index=False)
     s = summarise(per_trip)
     s.to_csv(OUT / "classifier_vs_hmm.csv", index=False)
@@ -99,4 +100,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(sys.argv[1:] or None)

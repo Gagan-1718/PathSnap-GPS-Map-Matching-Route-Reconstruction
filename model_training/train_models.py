@@ -13,6 +13,7 @@ import time
 import joblib
 import numpy as np
 import pandas as pd
+from lightgbm import LGBMClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GroupKFold
@@ -43,7 +44,7 @@ MODELS = {
         "build": lambda p: DecisionTreeClassifier(random_state=SEED, **p),
     },
     "gaussian_naive_bayes": {
-        "family": "Linear / probabilistic",
+        "family": "Probabilistic",
         "params": {"var_smoothing": 1e-9},
         "build": lambda p: GaussianNB(**p),
     },
@@ -53,9 +54,14 @@ MODELS = {
         "build": lambda p: make_pipeline(StandardScaler(), KNeighborsClassifier(n_jobs=-1, **p)),
     },
     "random_forest": {
-        "family": "Ensemble",
+        "family": "Ensemble (bagging)",
         "params": {"n_estimators": 100, "max_depth": 12, "min_samples_leaf": 20},
         "build": lambda p: RandomForestClassifier(random_state=SEED, n_jobs=-1, **p),
+    },
+    "lightgbm": {
+        "family": "Boosting",
+        "params": {"n_estimators": 200, "learning_rate": 0.1, "num_leaves": 31, "min_child_samples": 50},
+        "build": lambda p: LGBMClassifier(random_state=SEED, n_jobs=-1, verbose=-1, **p),
     },
 }
 
@@ -97,6 +103,13 @@ def fit_final(name, spec, df):
     t0 = time.time()
     model.fit(df[FEATURES].to_numpy(), df["label"].to_numpy())
     joblib.dump(model, MODEL_DIR / f"{name}.joblib")
+    # real epoch-wise history, only for models that produce one (MLP)
+    est = model.steps[-1][1] if hasattr(model, "steps") else model
+    if hasattr(est, "loss_curve_"):
+        hist = pd.DataFrame({"epoch": range(1, len(est.loss_curve_) + 1), "train_loss": est.loss_curve_})
+        if getattr(est, "validation_scores_", None) is not None:
+            hist["validation_accuracy"] = est.validation_scores_
+        hist.to_csv(OUT / f"{name}_training_history.csv", index=False)
     config = {"model": name, "family": spec["family"], "params": spec["params"], "seed": SEED,
               "features": FEATURES, "cv": f"GroupKFold({N_FOLDS}) by trip",
               "train_trips": int(df["trip_id"].nunique()), "train_rows": len(df),
@@ -118,6 +131,11 @@ def main(names=None):
         fit_final(name, spec, df)
 
     folds = pd.DataFrame(rows)
+    # keep earlier results for models not retrained in this run
+    old_file = OUT / "cv_folds.csv"
+    if names and old_file.exists():
+        old = pd.read_csv(old_file)
+        folds = pd.concat([old[~old["model"].isin(folds["model"])], folds], ignore_index=True)
     folds.to_csv(OUT / "cv_folds.csv", index=False)
     summary = folds.drop(columns="fold").groupby("model").agg(["mean", "std"])
     summary.columns = [f"{a}_{b}" for a, b in summary.columns]

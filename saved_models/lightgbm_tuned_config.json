@@ -1,0 +1,27 @@
+{
+  "model": "lightgbm_tuned",
+  "family": "Boosting",
+  "params": {
+    "n_estimators": 218,
+    "learning_rate": 0.023782958576333956,
+    "num_leaves": 34,
+    "min_child_samples": 79,
+    "colsample_bytree": 0.7589098814221011,
+    "reg_lambda": 0.21417670225954943
+  },
+  "seed": 42,
+  "features": [
+    "dist_m",
+    "dist_rank",
+    "dist_gap_m",
+    "heading_diff",
+    "heading_reliable",
+    "speed_mps",
+    "arc_len_m",
+    "proj_frac",
+    "n_candidates",
+    "time_gap_s"
+  ],
+  "tuned_by": "Optuna TPE",
+  "cv": "GroupKFold(5) by trip"
+}

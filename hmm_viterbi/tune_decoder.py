@@ -19,12 +19,26 @@ from feature_engineering.features import FEATURES
 from hmm_viterbi.hmm import DEFAULT_PARAMS, RoadGraph, decode_trip
 from model_training.train_models import MODELS, SEED, load_split
 
+# Small, focused grid (less risk of overfitting the 15 tuning trips):
+# hop and U-turn penalties keep their earlier best values; we only test
+# how much to trust the classifier and the disconnect penalty, whose
+# earlier best (20) sat at the edge of its range.
 GRID = {
-    "hop_penalty": [0.5, 1.0, 2.0],
-    "uturn_penalty": [1.0, 3.0],
-    "disconnect_penalty": [6.0, 12.0, 20.0],
+    "emission_weight": [0.5, 1.0, 2.0],   # trust in the classifier vs the road network
+    "hop_penalty": [1.0],
+    "uturn_penalty": [1.0],
+    "disconnect_penalty": [20.0, 35.0],
 }
 N_HOLDOUT = 15
+
+
+def model_spec(name):
+    """Build settings for a model name; '<model>_tuned' uses its saved tuned parameters."""
+    base = name.removesuffix("_tuned")
+    params = MODELS[base]["params"]
+    if name.endswith("_tuned"):
+        params = json.loads((ROOT / "saved_models" / f"{name}_config.json").read_text())["params"]
+    return MODELS[base], params
 
 
 def main(model_name="decision_tree"):
@@ -35,8 +49,8 @@ def main(model_name="decision_tree"):
     holdout = np.random.default_rng(SEED).choice(trips, N_HOLDOUT, replace=False)
 
     fit_df = df[~df["trip_id"].isin(holdout) & (df["ref_arc"] >= 0)]
-    spec = MODELS[model_name]
-    model = spec["build"](spec["params"]).fit(fit_df[FEATURES].to_numpy(), fit_df["label"].to_numpy())
+    spec, params = model_spec(model_name)
+    model = spec["build"](params).fit(fit_df[FEATURES].to_numpy(), fit_df["label"].to_numpy())
 
     cache = []
     for tid in holdout:
@@ -60,7 +74,7 @@ def main(model_name="decision_tree"):
         print(rows[-1])
 
     grid = pd.DataFrame(rows).sort_values("holdout_top1_accuracy", ascending=False)
-    grid.to_csv(out / "decoder_grid.csv", index=False)
+    grid.to_csv(out / f"decoder_grid_{model_name}.csv", index=False)
     best = {**DEFAULT_PARAMS, **grid.iloc[0][list(GRID)].to_dict()}
     best["tuned_with_model"] = model_name
     best["holdout_trips"] = holdout.tolist()

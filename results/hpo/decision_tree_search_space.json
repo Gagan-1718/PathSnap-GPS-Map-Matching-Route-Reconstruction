@@ -1,0 +1,27 @@
+{
+  "sampler": "TPE (Bayesian)",
+  "objective": "mean Macro F1, 3-fold GroupKFold by trip",
+  "n_trials": 20,
+  "seed": 42,
+  "space": {
+    "max_depth": [
+      "int",
+      3,
+      25
+    ],
+    "min_samples_leaf": [
+      "int",
+      5,
+      500,
+      "log"
+    ],
+    "criterion": [
+      "cat",
+      [
+        "gini",
+        "entropy"
+      ]
+    ]
+  },
+  "search_time_s": 881.3
+}

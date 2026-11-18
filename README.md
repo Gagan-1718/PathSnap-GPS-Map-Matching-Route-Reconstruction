@@ -1,4 +1,4 @@
-﻿# PathSnap â€“ GPS Map-Matching & Route Reconstruction
+# PathSnap – GPS Map-Matching & Route Reconstruction
 
 Noisy GPS points often drift off the road. PathSnap snaps each GPS point to the road segment the vehicle was really on.
 It uses a machine-learning classifier to score nearby road segments, then an HMM + Viterbi decoder to turn those scores into one connected route.
@@ -56,7 +56,7 @@ Then place the dataset in `data/` (see [data/README.md](data/README.md)).
 
 ## Reproducing the results
 
-**Google Colab:** open [PathSnap_Colab.ipynb](PathSnap_Colab.ipynb) â†’
+**Google Colab:** open [PathSnap_Colab.ipynb](PathSnap_Colab.ipynb) →
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Gagan-1718/PathSnap-GPS-Map-Matching-Route-Reconstruction/blob/feat/pathsnap-pipeline/PathSnap_Colab.ipynb).
 It clones this repo, asks you to upload the dataset zip, and runs every stage below with its outputs.
 
@@ -65,13 +65,14 @@ It clones this repo, asks you to upload the dataset zip, and runs every stage be
 ```bash
 python -m data_processing.explore_data            # dataset inventory and quality checks
 python -m feature_engineering.build_dataset       # candidates, features, labels
-python -m model_training.train_models             # 5 models, 5-fold GroupKFold CV
+python -m model_training.train_models             # 6 models, 5-fold GroupKFold CV
 python -m model_evaluation.evaluate_models        # student-test comparison
 python -m hmm_viterbi.tune_decoder random_forest  # decoder penalties (training trips only)
-python -m hyperparameter_optimisation.bayes_opt random_forest 20
+python -m hyperparameter_optimisation.bayes_opt lightgbm 20
+python -m model_evaluation.pipeline_cv decision_tree random_forest lightgbm lightgbm_tuned   # model selection
 python -m hmm_viterbi.evaluate_hmm                # classifier-only vs classifier + HMM
 python -m visualisations.plots                    # plots in results/plots
-python -m visualisations.folium_maps random_forest_tuned   # maps in results/maps
+python -m visualisations.folium_maps lightgbm_tuned   # maps in results/maps
 ```
 
 ## Running the system (two laptops)
@@ -91,15 +92,52 @@ Full steps, including the firewall and evaluator trips, are in [deployment/DEPLO
 
 ## Models compared
 
-| # | Model | Family |
-|---|---|---|
-| 1 | Logistic Regression | Linear / probabilistic |
-| 2 | Decision Tree | Tree-based |
-| 3 | Gaussian Naive Bayes | Probabilistic |
-| 4 | K-Nearest Neighbours | Instance-based |
-| 5 | Random Forest | Ensemble |
+"Right road" means the share of GPS points matched to the correct road on the 10 student-test trips. CV uses 80 training trips with 5-fold GroupKFold by trip.
 
-Results are in `results/training/cv_summary.csv`, `results/evaluation/student_test_metrics.csv` and `results/hmm/classifier_vs_hmm.csv`.
+| # | Model | Family | CV right road | Test: model only | Test: + HMM | Connected route + HMM |
+|---|---|---|---|---|---|---|
+| 1 | Logistic Regression | Linear | 87.8% | 87.9% | 88.9% | 91.8% |
+| 2 | Gaussian Naive Bayes | Probabilistic | 86.9% | 86.3% | 88.5% | 89.6% |
+| 3 | Decision Tree | Tree | 89.1% | 90.1% | 91.7% | 89.5% |
+| 4 | K-Nearest Neighbours | Instance-based | 88.0% | 89.5% | 90.7% | 89.3% |
+| 5 | Random Forest | Ensemble (bagging) | 89.1% | 90.2% | 91.5% | 90.0% |
+| 6 | LightGBM | Boosting | 89.1% | 90.3% | 91.4% | 89.3% |
+| ★ | **LightGBM, tuned (final)** | Boosting | **89.2%** | 90.2% | 91.6% | 89.6% |
+
+"+ HMM" columns use the final, locked decoder settings (`saved_models/hmm_params.json`).
+
+### How the final model was chosen
+
+The rule was fixed before looking at the results:
+
+1. **Main score:** right road **with HMM** over the full pipeline, cross-validated on all **80 training trips** (`results/model_selection/`; run with the earlier decoder settings, before the final decoder re-tune).
+2. **Is the gap real?** A paired bootstrap over trips (2000 resamples). A model must win at least 90% of resamples to count as better.
+3. **If tied:** prefer better probability quality (log loss), because the HMM uses the probabilities. Then prefer speed.
+
+| Full pipeline, 80 trips | Right road + HMM | Log loss (CV) |
+|---|---|---|
+| Random Forest | 91.73% | 0.0905 |
+| **LightGBM, tuned** | 91.65% | **0.0886** |
+| LightGBM | 91.63% | 0.0895 |
+| Decision Tree | 91.63% | 0.0926 |
+
+The top models are a **statistical tie**: Random Forest beats tuned LightGBM in only 76% of bootstrap resamples. The tie-break picks **tuned LightGBM**, which has the best probabilities, the best route match (0.904) and the best model-only accuracy (89.2%). Bayesian optimisation (Optuna TPE, 20 trials) improved LightGBM's CV score and log loss. See `results/hpo/`. The 10 student-test trips only confirm the choice; they were not used to make it.
+
+**HMM + Viterbi** improves every model: route continuity rises from about 68–74% (model only) to 89–92%.
+
+### HMM decoder settings (locked)
+
+The decoder was re-tuned with the final model's probabilities on 15 training trips, using a small grid to avoid overfitting. It was then checked on the **65 other training trips** and the 10 test trips (`results/hmm/decoder_comparison.csv`):
+
+| Unseen trips | Right road: old → new | Connected route: old → new |
+|---|---|---|
+| 65 training trips | 91.89% → 92.00% | 85.9% → 88.5% |
+| 10 student-test trips | 91.62% → 91.55% | 87.0% → 89.6% |
+
+Accuracy is unchanged (within noise), and continuity improves by 2.6 points on both unseen sets, so the new settings were kept: emission weight 0.5, hop penalty 1, U-turn penalty 1, disconnect penalty 35, gap reset after 10 s.
+
+Sources: `results/training/cv_summary.csv`, `results/evaluation/student_test_metrics.csv`, `results/hmm/classifier_vs_hmm.csv`.
+KNN's model file (210 MB) is too large for GitHub. Rebuild it with `python -m model_training.train_models knn`.
 
 ## Evaluation rules we follow
 

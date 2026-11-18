@@ -58,7 +58,11 @@ def trip_map(split, trip_id, model_name=None):
     trip = prepare_trip(split, trip_id)
     tr = trip["track"]
     cands = add_features(generate_candidates(trip), trip)
-    m = folium.Map(tiles="cartodbpositron", control_scale=True)
+    m = folium.Map(tiles=None, control_scale=True)
+    folium.TileLayer("OpenStreetMap", name="Streets").add_to(m)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        attr="Imagery &copy; Esri", name="Satellite").add_to(m)
     m.fit_bounds([[tr["lat"].min(), tr["lon"].min()], [tr["lat"].max(), tr["lon"].max()]])
 
     net = folium.FeatureGroup("Road network (near track)")

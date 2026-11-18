@@ -21,5 +21,5 @@
   "cv": "GroupKFold(5) by trip",
   "train_trips": 80,
   "train_rows": 1183290,
-  "fit_time_s": 7.253
+  "fit_time_s": 5.53
 }

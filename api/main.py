@@ -17,13 +17,14 @@ from pydantic import BaseModel
 
 from api.pipeline import (CONFIG, available_trips, gps_points, load_models, predict_trip,
                           route_geometry, score_prediction)
+from api.summary import chart_data, dataset_summary, model_rows
 from hmm_viterbi.evaluate_hmm import load_params
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 log = logging.getLogger("pathsnap")
 
 SPLIT = os.environ.get("PATHSNAP_SPLIT", CONFIG["trip_split"])
-MODELS = load_models()
+MODELS = load_models(CONFIG.get("visible_models"))
 HMM_PARAMS = load_params()
 DEFAULT_MODEL = CONFIG["default_model"] if CONFIG["default_model"] in MODELS else next(iter(MODELS))
 log.info("Loaded models: %s (default: %s) | trip split: %s", list(MODELS), DEFAULT_MODEL, SPLIT)
@@ -47,6 +48,14 @@ def models():
     return {"models": list(MODELS), "default_model": DEFAULT_MODEL}
 
 
+@app.get("/summary")
+def summary():
+    """Experiment results for the models on show (aggregate metrics only)."""
+    names = list(MODELS)
+    return {"default_model": DEFAULT_MODEL, "models": model_rows(names), "dataset": dataset_summary(),
+            "charts": chart_data(names, DEFAULT_MODEL)}
+
+
 @app.get("/trips")
 def trips():
     return {"split": SPLIT, "trips": available_trips(SPLIT)}
@@ -64,6 +73,7 @@ def predict(req: PredictRequest):
     trip, points, arcs, clf_arcs, seconds = predict_trip(SPLIT, req.trip_id, MODELS[name], HMM_PARAMS)
     metrics = score_prediction(SPLIT, req.trip_id, trip, points, arcs, clf_arcs)
     lines, n_segments = route_geometry(trip, arcs)
+    clf_lines, _ = route_geometry(trip, clf_arcs)
     log.info("RESPONSE trip=%s model=%s gps_points=%d segments=%d time=%.2fs top1=%s continuity=%.3f",
              req.trip_id, name, len(trip["track"]), n_segments, seconds,
              None if metrics.get("top1_accuracy") is None else round(metrics["top1_accuracy"], 4),
@@ -74,7 +84,11 @@ def predict(req: PredictRequest):
         "gps_point_count": len(trip["track"]),
         "gps_points": gps_points(trip, CONFIG["max_gps_points_returned"]),
         "predicted_route": lines,
+        "classifier_only_route": clf_lines,
         "predicted_segments": n_segments,
+        # predicted arc per GPS point (predictions only, no reference data) - lets the UI compare two models
+        "point_ids": points.tolist(),
+        "point_arcs": arcs.tolist(),
         "inference_time_s": round(seconds, 3),
         "metrics": metrics,
     }

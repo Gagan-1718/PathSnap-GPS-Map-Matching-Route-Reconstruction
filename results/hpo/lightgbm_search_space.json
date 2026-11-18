@@ -1,0 +1,43 @@
+{
+  "sampler": "TPE (Bayesian)",
+  "objective": "mean Macro F1, 3-fold GroupKFold by trip",
+  "n_trials": 20,
+  "seed": 42,
+  "space": {
+    "n_estimators": [
+      "int",
+      100,
+      500
+    ],
+    "learning_rate": [
+      "float",
+      0.02,
+      0.3,
+      "log"
+    ],
+    "num_leaves": [
+      "int",
+      15,
+      127,
+      "log"
+    ],
+    "min_child_samples": [
+      "int",
+      10,
+      300,
+      "log"
+    ],
+    "colsample_bytree": [
+      "float",
+      0.5,
+      1.0
+    ],
+    "reg_lambda": [
+      "float",
+      0.001,
+      10.0,
+      "log"
+    ]
+  },
+  "search_time_s": 222.7
+}

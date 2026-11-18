@@ -17,12 +17,16 @@ from hmm_viterbi.evaluate_hmm import classifier_only, load_params, route_scores
 from hmm_viterbi.hmm import decode_trip
 from model_evaluation.metrics import route_continuity
 
-CONFIG = json.loads((ROOT / "deployment" / "config.json").read_text())
+CONFIG = json.loads((ROOT / "deployment" / "config.json").read_text(encoding="utf-8-sig"))
 MODEL_DIR = ROOT / "saved_models"
 
 
-def load_models():
-    return {p.stem: joblib.load(p) for p in sorted(MODEL_DIR.glob("*.joblib"))}
+def load_models(names=None):
+    """Load saved models. names = which models to expose (from config visible_models)."""
+    paths = sorted(MODEL_DIR.glob("*.joblib"))
+    if names:
+        paths = [p for p in paths if p.stem in names]
+    return {p.stem: joblib.load(p) for p in paths}
 
 
 def available_trips(split):
