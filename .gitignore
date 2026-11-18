@@ -20,3 +20,6 @@ Thumbs.db
 
 # Rebuilt feature tables
 cache/
+
+# Too large for GitHub (210 MB); rebuild with: python -m model_training.train_models knn
+saved_models/knn.joblib
