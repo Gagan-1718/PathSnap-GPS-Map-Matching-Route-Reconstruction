@@ -13,8 +13,9 @@ import time
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import ExtraTreesClassifier, HistGradientBoostingClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import GroupKFold
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
@@ -57,6 +58,28 @@ MODELS = {
         "params": {"n_estimators": 100, "max_depth": 12, "min_samples_leaf": 20},
         "build": lambda p: RandomForestClassifier(random_state=SEED, n_jobs=-1, **p),
     },
+    "sgd_classifier": {
+        "family": "Linear / probabilistic",
+        "params": {"loss": "log_loss", "alpha": 1e-4, "max_iter": 20, "tol": 1e-3},
+        "build": lambda p: make_pipeline(StandardScaler(), SGDClassifier(random_state=SEED, **p)),
+    },
+    "extra_trees": {
+        "family": "Ensemble",
+        "params": {"n_estimators": 60, "max_depth": 12, "min_samples_leaf": 20},
+        "build": lambda p: ExtraTreesClassifier(random_state=SEED, n_jobs=-1, **p),
+    },
+    "hist_gradient_boosting": {
+        "family": "Boosting",
+        "params": {"max_iter": 150, "learning_rate": 0.1, "max_leaf_nodes": 31},
+        "build": lambda p: HistGradientBoostingClassifier(random_state=SEED, **p),
+    },
+    "mlp": {
+        "family": "Neural network",
+        "params": {"hidden_layer_sizes": [32, 16], "batch_size": 2048, "max_iter": 25,
+                   "early_stopping": True, "n_iter_no_change": 4},
+        "build": lambda p: make_pipeline(StandardScaler(), MLPClassifier(
+            random_state=SEED, **{**p, "hidden_layer_sizes": tuple(p["hidden_layer_sizes"])})),
+    },
 }
 
 
@@ -97,6 +120,13 @@ def fit_final(name, spec, df):
     t0 = time.time()
     model.fit(df[FEATURES].to_numpy(), df["label"].to_numpy())
     joblib.dump(model, MODEL_DIR / f"{name}.joblib")
+    # real epoch-wise history, only for models that produce one (MLP)
+    est = model.steps[-1][1] if hasattr(model, "steps") else model
+    if hasattr(est, "loss_curve_"):
+        hist = pd.DataFrame({"epoch": range(1, len(est.loss_curve_) + 1), "train_loss": est.loss_curve_})
+        if getattr(est, "validation_scores_", None) is not None:
+            hist["validation_accuracy"] = est.validation_scores_
+        hist.to_csv(OUT / f"{name}_training_history.csv", index=False)
     config = {"model": name, "family": spec["family"], "params": spec["params"], "seed": SEED,
               "features": FEATURES, "cv": f"GroupKFold({N_FOLDS}) by trip",
               "train_trips": int(df["trip_id"].nunique()), "train_rows": len(df),
@@ -118,6 +148,11 @@ def main(names=None):
         fit_final(name, spec, df)
 
     folds = pd.DataFrame(rows)
+    # keep earlier results for models not retrained in this run
+    old_file = OUT / "cv_folds.csv"
+    if names and old_file.exists():
+        old = pd.read_csv(old_file)
+        folds = pd.concat([old[~old["model"].isin(folds["model"])], folds], ignore_index=True)
     folds.to_csv(OUT / "cv_folds.csv", index=False)
     summary = folds.drop(columns="fold").groupby("model").agg(["mean", "std"])
     summary.columns = [f"{a}_{b}" for a, b in summary.columns]
