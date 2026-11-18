@@ -1,5 +1,5 @@
-{
-  "default_model": "decision_tree_tuned",
+﻿{
+  "default_model": "decision_tree",
   "visible_models": ["logistic_regression", "decision_tree", "decision_tree_tuned"],
   "trip_split": "student_test",
   "host": "0.0.0.0",
