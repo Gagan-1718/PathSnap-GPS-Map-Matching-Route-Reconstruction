@@ -135,7 +135,12 @@
   th { text-align: left; font: 500 12px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid var(--line-2); }
   td { padding: 13px 12px; border-bottom: 1px solid var(--line); }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  tr.best td { background: rgba(212,137,90,.07); }
+  tr.best td { background: rgba(212,137,90,.09); }
+  table.simple td { padding: 15px 12px; font-size: 16px; }
+  table.simple td.num { white-space: nowrap; }
+  table.simple .from { color: var(--faint); }
+  table.simple .arrow { color: var(--faint); margin: 0 6px; }
+  table.simple .to { font-weight: 600; }
   .tag { font: 11px var(--mono); color: var(--accent-orange); border: 1px solid rgba(212,137,90,.4); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
   .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: 0; }
 
@@ -286,21 +291,16 @@
       </div>
     </div>
 
-    <div class="card" style="margin-top:20px">
-      <div class="card-head"><h3>Per trip: what HMM changes</h3><p class="small muted" id="tripSub">% right road on each test trip</p></div>
-      <div class="chart" id="chTrips"></div>
-      <div class="legend"><span><i style="background:var(--s-clf);border-radius:50%"></i>Model only</span><span><i style="background:var(--s-hmm);border-radius:50%"></i>Model + HMM</span></div>
-    </div>
-
     <div class="grid2">
-      <div class="card span2" style="padding:20px 20px 8px; overflow-x:auto">
-        <div class="card-head" style="padding:0 4px"><h3>All numbers</h3><p class="small muted">table view of the charts above</p></div>
-        <table id="resTable"><thead><tr>
-          <th>Model</th><th>Type</th>
-          <th class="num">Right road · model</th><th class="num">Right road · + HMM</th>
-          <th class="num">Connected · model</th><th class="num">Connected · + HMM</th>
-          <th class="num">Route match · + HMM</th><th class="num">Time per trip</th>
+      <div class="card span2" style="padding:22px 24px 10px; overflow-x:auto">
+        <div class="card-head"><h3>All models at a glance</h3><p class="small muted">10 test trips · best first</p></div>
+        <table id="resTable" class="simple"><thead><tr>
+          <th>Model</th>
+          <th class="num">Right road</th>
+          <th class="num">Connected route</th>
+          <th class="num">Time per trip</th>
         </tr></thead><tbody></tbody></table>
+        <p class="small muted" style="margin:12px 0 4px">Right road and connected route are shown as <b style="color:var(--text)">model only → with HMM</b>.</p>
       </div>
     </div>
   </section>
@@ -418,8 +418,9 @@ const pct = (x, d = 1) => x == null ? "—" : (100 * x).toFixed(d) + "%";
 const num = (x, d = 3) => x == null ? "—" : Number(x).toFixed(d);
 const NAMES = { knn: "KNN", lightgbm: "LightGBM", gaussian_naive_bayes: "Gaussian Naive Bayes" };
 const pretty = (m) => { const b = m.replace(/_tuned$/, ""); return (NAMES[b] || b.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())) + (m.endsWith("_tuned") ? " · tuned" : ""); };
-const short = (m) => ({ logistic_regression: "Log. Regression", decision_tree: "Decision Tree", decision_tree_tuned: "Dec. Tree · tuned",
-  random_forest: "Random Forest", random_forest_tuned: "Rand. Forest · tuned", gaussian_naive_bayes: "Naive Bayes", knn: "KNN", lightgbm: "LightGBM" })[m] || pretty(m);
+const short = (m) => ({ logistic_regression: "Logistic Regression", decision_tree: "Decision Tree", decision_tree_tuned: "Decision Tree tuned",
+  random_forest: "Random Forest", random_forest_tuned: "Random Forest tuned", gaussian_naive_bayes: "Naive Bayes", knn: "KNN",
+  lightgbm: "LightGBM", lightgbm_tuned: "LightGBM tuned ★" })[m] || pretty(m);
 const api = () => $("api").value.replace(/\/+$/, "");
 function status(msg, cls = "") { $("status").textContent = msg; $("status").className = cls; }
 async function getJSON(path, opts) {
@@ -471,8 +472,8 @@ function roundedBar(svg, x, y, w, h, color) {
 /* grouped bars: categories x series, values 0..1 */
 function groupedBars(container, cats, series, opt = {}) {
   if (!cats.length || series.every(s => s.values.every(v => v == null))) { container.innerHTML = '<div class="empty">No results yet. Run the HMM evaluation.</div>'; return; }
-  const { svg, w, h } = frame(container, 260);
-  const m = { l: 44, r: 8, t: 22, b: 30 };
+  const { svg, w, h } = frame(container, 280);
+  const m = { l: 44, r: 8, t: 22, b: 44 };
   const lo = opt.min ?? 0, hi = 1;
   const y = v => m.t + (h - m.t - m.b) * (1 - (v - lo) / (hi - lo));
   yAxis(svg, m.l, w - m.r, y, opt.ticks || [0, .25, .5, .75, 1], t => Math.round(t * 100) + "%");
@@ -482,14 +483,21 @@ function groupedBars(container, cats, series, opt = {}) {
     series.forEach((s, j) => {
       const v = s.values[i]; if (v == null) return;
       const x = cx - total / 2 + j * (bw + gap);
-      const bar = roundedBar(svg, x, y(v), bw, y(lo) - y(v), s.color);
-      const lbl = el("text", { x: x + bw / 2, y: y(v) - 6, "text-anchor": "middle", fill: css("--text"), "font-size": 11 }, svg);
-      lbl.textContent = (v * 100).toFixed(1);
+      roundedBar(svg, x, y(v), bw, y(lo) - y(v), s.color);
+      // selective labels: only the last series (the "with HMM" value) gets a number on top
+      if (j === series.length - 1) {
+        const lbl = el("text", { x: cx, y: y(Math.max(...series.map(q => q.values[i] ?? 0))) - 7, "text-anchor": "middle", fill: css("--text"), "font-size": 12, "font-weight": 600 }, svg);
+        lbl.textContent = (v * 100).toFixed(1);
+      }
       const hit = el("rect", { x: x - 2, y: m.t, width: bw + 4, height: h - m.t - m.b, fill: "transparent" }, svg);
-      hit.addEventListener("mousemove", e => showTip(e, `<div class="t">${c}</div><b>${s.name}</b>: ${pct(v)}`));
+      hit.addEventListener("mousemove", e => showTip(e, `<div class="t">${c}</div>${series.map(q => `${q.name}: <b>${pct(q.values[i])}</b>`).join("<br>")}`));
       hit.addEventListener("mouseleave", hideTip);
     });
-    const t = el("text", { x: cx, y: h - 8, "text-anchor": "middle", fill: css("--muted"), "font-size": 12 }, svg); t.textContent = c;
+    // category name on up to two lines so long names never collide
+    const words = c.split(" "), half = Math.ceil(words.length / 2);
+    const lines = words.length > 1 ? [words.slice(0, half).join(" "), words.slice(half).join(" ")] : [c];
+    const t = el("text", { x: cx, y: h - 26, "text-anchor": "middle", fill: css("--muted"), "font-size": 12 }, svg);
+    lines.forEach((ln, k) => { const ts = el("tspan", { x: cx, dy: k ? 14 : 0 }, t); ts.textContent = ln; });
   });
 }
 
@@ -588,8 +596,6 @@ function drawCharts() {
   groupedBars($("chRoute"), cats, [
     { name: "Model only", color: css("--s-clf"), values: rows.map(r => r.clf_route_f1) },
     { name: "Model + HMM", color: css("--s-hmm"), values: rows.map(r => r.hmm_route_f1) }]);
-  dumbbell($("chTrips"), ch.per_trip || []);
-  $("tripSub").textContent = `% right road on each test trip · ${pretty(summary.default_model)}`;
 }
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (summary && pages[current].dataset.title === "Results") drawCharts(); }, 150); });
 
@@ -717,27 +723,27 @@ function fillResults() {
     ["Time per trip", f.hmm_time_per_trip_s == null ? "—" : f.hmm_time_per_trip_s.toFixed(2) + "s", "model + HMM, average"],
   ];
   $("kpis").innerHTML = kpis.map(([k, v, s]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
-  $("resTable").querySelector("tbody").innerHTML = rows.map(r => `
+  const sorted = [...rows].sort((a, b) => (b.model === best) - (a.model === best) || (b.hmm_top1 ?? 0) - (a.hmm_top1 ?? 0));
+  const pair = (a, b, d = 1) => `<span class="from">${pct(a, d)}</span><span class="arrow">→</span><span class="to">${pct(b, d)}</span>`;
+  $("resTable").querySelector("tbody").innerHTML = sorted.map(r => `
     <tr class="${r.model === best ? "best" : ""}">
       <td><span class="sw" style="background:${modelColor(r.model)}"></span>${pretty(r.model)}${r.model === best ? '<span class="tag">final</span>' : ""}</td>
-      <td class="muted">${r.family || "—"}</td>
-      <td class="num">${pct(r.clf_top1)}</td><td class="num"><b>${pct(r.hmm_top1)}</b></td>
-      <td class="num">${pct(r.clf_continuity)}</td><td class="num"><b>${pct(r.hmm_continuity)}</b></td>
-      <td class="num">${pct(r.hmm_route_f1)}</td>
-      <td class="num">${r.hmm_time_per_trip_s == null ? "—" : r.hmm_time_per_trip_s.toFixed(2) + "s"}</td>
+      <td class="num">${pair(r.clf_top1, r.hmm_top1)}</td>
+      <td class="num">${pair(r.clf_continuity, r.hmm_continuity, 0)}</td>
+      <td class="num">${r.hmm_time_per_trip_s == null ? "—" : r.hmm_time_per_trip_s.toFixed(2) + " s"}</td>
     </tr>`).join("");
   // plain-language takeaways computed from the rows
   const withHmm = rows.filter(r => r.hmm_top1 != null);
   if (withHmm.length) {
-    const top = [...withHmm].sort((a, b) => b.hmm_top1 - a.hmm_top1)[0];
+    const fin = withHmm.find(r => r.model === best) || withHmm[0];
+    const strong = withHmm.filter(r => r.hmm_top1 >= fin.hmm_top1 - 0.005);
+    const spread = (Math.max(...strong.map(r => r.hmm_top1)) - Math.min(...strong.map(r => r.hmm_top1))) * 100;
     const gains = withHmm.map(r => r.hmm_continuity - r.clf_continuity);
-    const tuned = rows.find(r => r.tuned), untuned = tuned && rows.find(r => r.model === tuned.model.replace(/_tuned$/, ""));
     const items = [
-      `<b>${pretty(top.model)}</b> finds the right road most often: <b>${pct(top.hmm_top1)}</b> with HMM.`,
+      `Final model: <b>${pretty(fin.model)}</b>. It finds the right road for <b>${pct(fin.hmm_top1)}</b> of GPS points with HMM.`,
+      `The top ${strong.length} models are within <b>${spread.toFixed(1)} points</b> of each other, a tie. We picked the one with the most reliable probabilities, because the HMM depends on them.`,
       `HMM improves every model. The route becomes connected far more often: <b>+${Math.round(100 * Math.min(...gains))} to +${Math.round(100 * Math.max(...gains))} points</b>.`,
-      tuned && untuned && tuned.hmm_top1 != null && untuned.hmm_top1 != null
-        ? `Bayesian tuning of ${pretty(untuned.model)}: ${pct(untuned.hmm_top1)} → ${pct(tuned.hmm_top1)} with HMM on the test trips.` : null,
-    ].filter(Boolean);
+    ];
     $("takeaways").innerHTML = `<ul style="margin:6px 0 0;padding-left:18px;color:#c9cac2;line-height:1.7">${items.map(i => `<li>${i}</li>`).join("")}</ul>`;
   }
 }
