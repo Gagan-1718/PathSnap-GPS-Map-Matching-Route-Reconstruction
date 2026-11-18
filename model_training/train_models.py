@@ -18,6 +18,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GroupKFold
 from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
@@ -46,6 +47,11 @@ MODELS = {
         "family": "Probabilistic",
         "params": {"var_smoothing": 1e-9},
         "build": lambda p: GaussianNB(**p),
+    },
+    "knn": {
+        "family": "Instance-based",
+        "params": {"n_neighbors": 25, "weights": "distance"},
+        "build": lambda p: make_pipeline(StandardScaler(), KNeighborsClassifier(n_jobs=-1, **p)),
     },
     "random_forest": {
         "family": "Ensemble (bagging)",
