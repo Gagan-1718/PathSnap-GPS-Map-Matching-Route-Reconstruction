@@ -206,9 +206,9 @@
       </div>
       <div class="card" style="padding:30px 32px">
         <p class="eyebrow" id="cardTitle">Top-1 accuracy on student-test GPS points</p>
-        <div class="stat"><div><h3>Classifier only</h3><p>Best-scoring road for each point, on its own</p></div><div class="big" id="ovClf">—</div></div>
+        <div class="stat"><div><h3>Model only</h3><p>Best-scoring road for each point, on its own</p></div><div class="big" id="ovClf">—</div></div>
         <div class="bar"><i id="ovClfBar" style="width:0;background:var(--s-clf)"></i></div>
-        <div class="stat"><div><h3>+ HMM / Viterbi</h3><p>Same model, decoded as one connected route</p></div><div class="big" id="ovHmm">—</div></div>
+        <div class="stat"><div><h3>Model + HMM</h3><p>Same model, joined into one connected route</p></div><div class="big" id="ovHmm">—</div></div>
         <div class="bar"><i id="ovHmmBar" style="width:0;background:var(--s-hmm)"></i></div>
         <div class="takeaway"><h3 id="ovTake">Connect to the API to load results.</h3><p class="small muted" id="ovNote"></p></div>
       </div>
@@ -234,9 +234,9 @@
           <span><i class="ln" style="background:none;border-top:2px dashed var(--muted)"></i>Gap: route not connected</span>
         </div>
         <div class="tiles">
-          <div class="tile"><div class="k">Top-1 · HMM</div><div class="v" id="tHmm">—</div><div class="s" id="tClf">classifier only —</div></div>
-          <div class="tile"><div class="k">Route continuity</div><div class="v" id="tCont">—</div><div class="s" id="tContClf">classifier only —</div></div>
-          <div class="tile"><div class="k">Route F1</div><div class="v" id="tF1">—</div><div class="s" id="tPR">precision / recall</div></div>
+          <div class="tile"><div class="k">Right road · + HMM</div><div class="v" id="tHmm">—</div><div class="s" id="tClf">model only —</div></div>
+          <div class="tile"><div class="k">Connected route</div><div class="v" id="tCont">—</div><div class="s" id="tContClf">model only —</div></div>
+          <div class="tile"><div class="k">Route match</div><div class="v" id="tF1">—</div><div class="s" id="tPR">overlap with the real route</div></div>
           <div class="tile"><div class="k">Inference</div><div class="v" id="tTime">—</div><div class="s" id="tPts">GPS points</div></div>
         </div>
       </div>
@@ -247,49 +247,49 @@
   <section class="page" data-title="Results">
     <p class="eyebrow">Experiments · 80 training trips · 10 student-test trips</p>
     <h2>Results</h2>
-    <p class="lead small">Cross-validation is 5-fold GroupKFold, grouped by trip, so a trip is never in both training and validation. Test scores are on the 10 student-test trips. Every number below is read from <code>results/*.csv</code>.</p>
+    <p class="lead small">Tested on 10 trips the models never saw during training. Every number below is read from <code>results/*.csv</code>.</p>
 
     <div class="kpis" id="kpis"></div>
 
     <div class="grid2">
       <div class="card">
-        <div class="card-head"><h3>Top-1 accuracy</h3><p class="small muted">share of GPS points matched to the right road</p></div>
+        <div class="card-head"><h3>Right road</h3><p class="small muted">% of GPS points matched to the correct road</p></div>
         <div class="chart" id="chTop1"></div>
-        <div class="legend"><span><i style="background:var(--s-clf)"></i>Classifier only</span><span><i style="background:var(--s-hmm)"></i>+ HMM / Viterbi</span></div>
+        <div class="legend"><span><i style="background:var(--s-clf)"></i>Model only</span><span><i style="background:var(--s-hmm)"></i>Model + HMM</span></div>
       </div>
       <div class="card">
-        <div class="card-head"><h3>Route continuity</h3><p class="small muted">road changes that are physically connected</p></div>
+        <div class="card-head"><h3>Connected route</h3><p class="small muted">% of road changes that are actually connected</p></div>
         <div class="chart" id="chCont"></div>
-        <div class="legend"><span><i style="background:var(--s-clf)"></i>Classifier only</span><span><i style="background:var(--s-hmm)"></i>+ HMM / Viterbi</span></div>
+        <div class="legend"><span><i style="background:var(--s-clf)"></i>Model only</span><span><i style="background:var(--s-hmm)"></i>Model + HMM</span></div>
       </div>
     </div>
 
     <div class="grid2">
       <div class="card">
-        <div class="card-head"><h3>Cross-validation by fold</h3><p class="small muted">Macro F1 per held-out fold of trips</p></div>
-        <div class="chart" id="chFolds"></div>
-        <div class="legend" id="lgFolds"></div>
+        <div class="card-head"><h3>Route match</h3><p class="small muted">how much the predicted route overlaps the real route</p></div>
+        <div class="chart" id="chRoute"></div>
+        <div class="legend"><span><i style="background:var(--s-clf)"></i>Model only</span><span><i style="background:var(--s-hmm)"></i>Model + HMM</span></div>
       </div>
       <div class="card">
-        <div class="card-head"><h3>Bayesian optimisation</h3><p class="small muted" id="hpoSub">Optuna TPE · CV Macro F1 per trial</p></div>
-        <div class="chart" id="chHpo"></div>
-        <div class="legend"><span><i style="background:var(--s-m3);border-radius:50%"></i>Trial</span><span><i class="ln" style="background:var(--text)"></i>Best so far</span></div>
+        <div class="card-head"><h3>In short</h3><p class="small muted">from the numbers on this page</p></div>
+        <div id="takeaways"></div>
       </div>
     </div>
 
     <div class="card" style="margin-top:20px">
-      <div class="card-head"><h3>Per trip: what HMM changes</h3><p class="small muted" id="tripSub">Top-1 accuracy on each student-test trip</p></div>
+      <div class="card-head"><h3>Per trip: what HMM changes</h3><p class="small muted" id="tripSub">% right road on each test trip</p></div>
       <div class="chart" id="chTrips"></div>
-      <div class="legend"><span><i style="background:var(--s-clf);border-radius:50%"></i>Classifier only</span><span><i style="background:var(--s-hmm);border-radius:50%"></i>+ HMM / Viterbi</span></div>
+      <div class="legend"><span><i style="background:var(--s-clf);border-radius:50%"></i>Model only</span><span><i style="background:var(--s-hmm);border-radius:50%"></i>Model + HMM</span></div>
     </div>
 
     <div class="grid2">
       <div class="card span2" style="padding:20px 20px 8px; overflow-x:auto">
         <div class="card-head" style="padding:0 4px"><h3>All numbers</h3><p class="small muted">table view of the charts above</p></div>
         <table id="resTable"><thead><tr>
-          <th>Model</th><th>Family</th><th class="num">CV Macro F1</th><th class="num">CV Log loss</th>
-          <th class="num">Test Macro F1</th><th class="num">Test Log loss</th><th class="num">Top-1 clf</th><th class="num">Top-1 + HMM</th>
-          <th class="num">Continuity clf</th><th class="num">Continuity + HMM</th>
+          <th>Model</th><th>Type</th>
+          <th class="num">Right road · model</th><th class="num">Right road · + HMM</th>
+          <th class="num">Connected · model</th><th class="num">Connected · + HMM</th>
+          <th class="num">Route match · + HMM</th><th class="num">Time per trip</th>
         </tr></thead><tbody></tbody></table>
       </div>
     </div>
@@ -320,7 +320,7 @@
     <div class="grid3">
       <div class="card"><h4>Why metres?</h4><p class="small" style="margin:6px 0 0">At this latitude, one degree of longitude is about 75 km but one degree of latitude is about 111 km. Over a few kilometres, a local flat projection gives accurate metres.</p></div>
       <div class="card"><h4>How are labels made?</h4><p class="small" style="margin:6px 0 0">The route lists arcs in driving order, not one per point. Each point's label is the nearest route arc within 30 m, preferring one that points the same way as the car. Points the route doesn't cover are left out.</p></div>
-      <div class="card"><h4>What does the classifier see?</h4><p class="small" style="margin:6px 0 0">One row per (GPS point, candidate road) pair. Label 1 means it's the true road, 0 means it isn't. That's about 10% positives, so we report Macro F1 alongside accuracy.</p></div>
+      <div class="card"><h4>What does the classifier see?</h4><p class="small" style="margin:6px 0 0">One row per (GPS point, candidate road) pair, answering: is this the true road, yes or no? For each GPS point, the road with the highest score is the model's pick.</p></div>
     </div>
 
     <h3 style="margin:44px 0 4px">The models on show</h3>
@@ -567,22 +567,16 @@ function drawCharts() {
   const rows = summary.models, ch = summary.charts || {};
   const cats = rows.map(r => short(r.model));
   groupedBars($("chTop1"), cats, [
-    { name: "Classifier only", color: css("--s-clf"), values: rows.map(r => r.clf_top1) },
-    { name: "+ HMM / Viterbi", color: css("--s-hmm"), values: rows.map(r => r.hmm_top1) }]);
+    { name: "Model only", color: css("--s-clf"), values: rows.map(r => r.clf_top1) },
+    { name: "Model + HMM", color: css("--s-hmm"), values: rows.map(r => r.hmm_top1) }]);
   groupedBars($("chCont"), cats, [
-    { name: "Classifier only", color: css("--s-clf"), values: rows.map(r => r.clf_continuity) },
-    { name: "+ HMM / Viterbi", color: css("--s-hmm"), values: rows.map(r => r.hmm_continuity) }]);
-  const folds = Object.entries(ch.folds || {});
-  const fs = [];
-  folds.forEach(([name, f]) => {
-    fs.push({ name: pretty(name) + " · validation", short: short(name), color: modelColor(name), values: f.val });
-  });
-  lineChart($("chFolds"), ["fold 1", "fold 2", "fold 3", "fold 4", "fold 5"], fs);
-  $("lgFolds").innerHTML = folds.map(([n]) => `<span><i style="background:${modelColor(n)}"></i>${pretty(n)}</span>`).join("");
-  hpoChart($("chHpo"), ch.hpo);
-  if (ch.hpo) $("hpoSub").textContent = `Optuna TPE · ${pretty(ch.hpo.model)} · ${ch.hpo.trials.length} trials · 3-fold grouped CV`;
+    { name: "Model only", color: css("--s-clf"), values: rows.map(r => r.clf_continuity) },
+    { name: "Model + HMM", color: css("--s-hmm"), values: rows.map(r => r.hmm_continuity) }]);
+  groupedBars($("chRoute"), cats, [
+    { name: "Model only", color: css("--s-clf"), values: rows.map(r => r.clf_route_f1) },
+    { name: "Model + HMM", color: css("--s-hmm"), values: rows.map(r => r.hmm_route_f1) }]);
   dumbbell($("chTrips"), ch.per_trip || []);
-  $("tripSub").textContent = `Top-1 accuracy per student-test trip · ${pretty(summary.default_model)}`;
+  $("tripSub").textContent = `% right road on each test trip · ${pretty(summary.default_model)}`;
 }
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (summary && pages[current].dataset.title === "Results") drawCharts(); }, 150); });
 
@@ -620,9 +614,9 @@ function fillOverview() {
   $("ovClfBar").style.width = pct(m.clf_top1); $("ovHmmBar").style.width = pct(m.hmm_top1);
   const gain = (100 * (m.hmm_top1 - m.clf_top1)).toFixed(1);
   $("heroAnswer").textContent = `${pct(m.hmm_top1)} of points matched.`;
-  $("cardTitle").textContent = `Top-1 accuracy · ${pretty(m.model)} · 10 student-test trips`;
+  $("cardTitle").textContent = `% of GPS points on the right road · ${pretty(m.model)} · 10 test trips`;
   $("ovTake").textContent = `HMM adds ${gain} points and lifts route continuity from ${pct(m.clf_continuity, 0)} to ${pct(m.hmm_continuity, 0)}.`;
-  $("ovNote").textContent = `Route F1 (overlap with the reference route): ${pct(m.clf_route_f1)} → ${pct(m.hmm_route_f1)}.`;
+  $("ovNote").textContent = `Route match (overlap with the real route): ${pct(m.clf_route_f1)} → ${pct(m.hmm_route_f1)}.`;
 }
 
 /* ---------- try it ---------- */
@@ -674,9 +668,9 @@ function draw(res) {
   const bounds = L.latLngBounds(res.gps_points);
   if (bounds.isValid()) map.fitBounds(bounds, { padding: [24, 24] });
   const m = res.metrics || {};
-  $("tHmm").textContent = pct(m.top1_accuracy); $("tClf").textContent = `classifier only ${pct(m.classifier_only_top1_accuracy)}`;
-  $("tCont").textContent = pct(m.route_continuity); $("tContClf").textContent = `classifier only ${pct(m.classifier_only_route_continuity)}`;
-  $("tF1").textContent = pct(m.route_f1); $("tPR").textContent = `precision ${pct(m.route_precision, 0)} · recall ${pct(m.route_recall, 0)}`;
+  $("tHmm").textContent = pct(m.top1_accuracy); $("tClf").textContent = `model only ${pct(m.classifier_only_top1_accuracy)}`;
+  $("tCont").textContent = pct(m.route_continuity); $("tContClf").textContent = `model only ${pct(m.classifier_only_route_continuity)}`;
+  $("tF1").textContent = pct(m.route_f1); $("tPR").textContent = "overlap with the real route";
   $("tTime").textContent = res.inference_time_s + "s"; $("tPts").textContent = `${res.gps_point_count} GPS points · ${res.predicted_segments} segments`;
 }
 
@@ -685,22 +679,35 @@ function fillResults() {
   const rows = summary.models, best = summary.default_model;
   const f = rows.find(r => r.model === best) || rows[0] || {};
   const kpis = [
-    ["CV Macro F1", num(f.cv_macro_f1), "5-fold grouped CV" + (f.tuned ? " (tuned)" : "")],
-    ["Test Macro F1", num(f.test_macro_f1), "10 student-test trips"],
-    ["Top-1 + HMM", pct(f.hmm_top1), `classifier only ${pct(f.clf_top1)}`],
-    ["Continuity + HMM", pct(f.hmm_continuity, 0), `classifier only ${pct(f.clf_continuity, 0)}`],
+    ["Right road · + HMM", pct(f.hmm_top1), `model only ${pct(f.clf_top1)}`],
+    ["Connected route · + HMM", pct(f.hmm_continuity, 0), `model only ${pct(f.clf_continuity, 0)}`],
+    ["Route match · + HMM", pct(f.hmm_route_f1, 0), `model only ${pct(f.clf_route_f1, 0)}`],
+    ["Time per trip", f.hmm_time_per_trip_s == null ? "—" : f.hmm_time_per_trip_s.toFixed(2) + "s", "model + HMM, average"],
   ];
   $("kpis").innerHTML = kpis.map(([k, v, s]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
-  $("kpis").insertAdjacentHTML("beforebegin", "");
   $("resTable").querySelector("tbody").innerHTML = rows.map(r => `
     <tr class="${r.model === best ? "best" : ""}">
       <td><span class="sw" style="background:${modelColor(r.model)}"></span>${pretty(r.model)}${r.model === best ? '<span class="tag">final</span>' : ""}</td>
       <td class="muted">${r.family || "—"}</td>
-      <td class="num">${num(r.cv_macro_f1)}${r.cv_macro_f1_std != null ? `<span class="muted small"> ±${num(r.cv_macro_f1_std)}</span>` : ""}</td>
-      <td class="num">${num(r.cv_log_loss)}</td><td class="num">${num(r.test_macro_f1)}</td><td class="num">${num(r.test_log_loss)}</td>
       <td class="num">${pct(r.clf_top1)}</td><td class="num"><b>${pct(r.hmm_top1)}</b></td>
       <td class="num">${pct(r.clf_continuity)}</td><td class="num"><b>${pct(r.hmm_continuity)}</b></td>
+      <td class="num">${pct(r.hmm_route_f1)}</td>
+      <td class="num">${r.hmm_time_per_trip_s == null ? "—" : r.hmm_time_per_trip_s.toFixed(2) + "s"}</td>
     </tr>`).join("");
+  // plain-language takeaways computed from the rows
+  const withHmm = rows.filter(r => r.hmm_top1 != null);
+  if (withHmm.length) {
+    const top = [...withHmm].sort((a, b) => b.hmm_top1 - a.hmm_top1)[0];
+    const gains = withHmm.map(r => r.hmm_continuity - r.clf_continuity);
+    const tuned = rows.find(r => r.tuned), untuned = tuned && rows.find(r => r.model === tuned.model.replace(/_tuned$/, ""));
+    const items = [
+      `<b>${pretty(top.model)}</b> finds the right road most often: <b>${pct(top.hmm_top1)}</b> with HMM.`,
+      `HMM improves every model. The route becomes connected far more often: <b>+${Math.round(100 * Math.min(...gains))} to +${Math.round(100 * Math.max(...gains))} points</b>.`,
+      tuned && untuned && tuned.hmm_top1 != null && untuned.hmm_top1 != null
+        ? `Tuning the Decision Tree changed little (${pct(untuned.hmm_top1)} → ${pct(tuned.hmm_top1)}), so we kept the original settings.` : null,
+    ].filter(Boolean);
+    $("takeaways").innerHTML = `<ul style="margin:6px 0 0;padding-left:18px;color:#c9cac2;line-height:1.7">${items.map(i => `<li>${i}</li>`).join("")}</ul>`;
+  }
 }
 
 /* ---------- model cards ---------- */
@@ -729,7 +736,7 @@ function fillModelCards() {
       <h3><span class="sw" style="background:${modelColor(r.model)}"></span>${pretty(r.model)}</h3>
       <p>${info.how}</p>${tunedNote}
       ${info.formula ? `<div class="formula">${info.formula}</div>` : ""}
-      <dl>${params}<dt>CV Macro F1</dt><dd>${num(r.cv_macro_f1)}</dd><dt>Top-1 + HMM</dt><dd>${pct(r.hmm_top1)}</dd></dl>
+      <dl>${params}<dt>Right road</dt><dd>${pct(r.clf_top1)} → <b>${pct(r.hmm_top1)}</b> with HMM</dd></dl>
       <div class="pc"><div><h4>Strengths</h4><ul>${info.pros.map(x => `<li>${x}</li>`).join("")}</ul></div>
         <div><h4>Limits</h4><ul>${info.cons.map(x => `<li>${x}</li>`).join("")}</ul></div></div>
     </div>`;
