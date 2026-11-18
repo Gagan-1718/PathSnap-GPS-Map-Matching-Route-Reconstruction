@@ -736,7 +736,7 @@ function fillResults() {
       `<b>${pretty(top.model)}</b> finds the right road most often: <b>${pct(top.hmm_top1)}</b> with HMM.`,
       `HMM improves every model. The route becomes connected far more often: <b>+${Math.round(100 * Math.min(...gains))} to +${Math.round(100 * Math.max(...gains))} points</b>.`,
       tuned && untuned && tuned.hmm_top1 != null && untuned.hmm_top1 != null
-        ? `Tuning the Decision Tree changed little (${pct(untuned.hmm_top1)} → ${pct(tuned.hmm_top1)}), so we kept the original settings.` : null,
+        ? `Bayesian tuning of ${pretty(untuned.model)}: ${pct(untuned.hmm_top1)} → ${pct(tuned.hmm_top1)} with HMM on the test trips.` : null,
     ].filter(Boolean);
     $("takeaways").innerHTML = `<ul style="margin:6px 0 0;padding-left:18px;color:#c9cac2;line-height:1.7">${items.map(i => `<li>${i}</li>`).join("")}</ul>`;
   }
