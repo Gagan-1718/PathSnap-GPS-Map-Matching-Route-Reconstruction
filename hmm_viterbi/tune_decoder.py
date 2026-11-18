@@ -19,11 +19,15 @@ from feature_engineering.features import FEATURES
 from hmm_viterbi.hmm import DEFAULT_PARAMS, RoadGraph, decode_trip
 from model_training.train_models import MODELS, SEED, load_split
 
+# Small, focused grid (less risk of overfitting the 15 tuning trips):
+# hop and U-turn penalties keep their earlier best values; we only test
+# how much to trust the classifier and the disconnect penalty, whose
+# earlier best (20) sat at the edge of its range.
 GRID = {
     "emission_weight": [0.5, 1.0, 2.0],   # trust in the classifier vs the road network
-    "hop_penalty": [0.5, 1.0, 2.0],
-    "uturn_penalty": [1.0, 3.0],
-    "disconnect_penalty": [12.0, 20.0, 35.0],
+    "hop_penalty": [1.0],
+    "uturn_penalty": [1.0],
+    "disconnect_penalty": [20.0, 35.0],
 }
 N_HOLDOUT = 15
 
