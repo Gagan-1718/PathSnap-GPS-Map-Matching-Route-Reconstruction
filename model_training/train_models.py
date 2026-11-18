@@ -13,12 +13,11 @@ import time
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import ExtraTreesClassifier, HistGradientBoostingClassifier, RandomForestClassifier
-from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.neural_network import MLPClassifier
+from lightgbm import LGBMClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GroupKFold
 from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
@@ -44,41 +43,19 @@ MODELS = {
         "build": lambda p: DecisionTreeClassifier(random_state=SEED, **p),
     },
     "gaussian_naive_bayes": {
-        "family": "Linear / probabilistic",
+        "family": "Probabilistic",
         "params": {"var_smoothing": 1e-9},
         "build": lambda p: GaussianNB(**p),
     },
-    "knn": {
-        "family": "Instance-based",
-        "params": {"n_neighbors": 25, "weights": "distance"},
-        "build": lambda p: make_pipeline(StandardScaler(), KNeighborsClassifier(n_jobs=-1, **p)),
-    },
     "random_forest": {
-        "family": "Ensemble",
+        "family": "Ensemble (bagging)",
         "params": {"n_estimators": 100, "max_depth": 12, "min_samples_leaf": 20},
         "build": lambda p: RandomForestClassifier(random_state=SEED, n_jobs=-1, **p),
     },
-    "sgd_classifier": {
-        "family": "Linear / probabilistic",
-        "params": {"loss": "log_loss", "alpha": 1e-4, "max_iter": 20, "tol": 1e-3},
-        "build": lambda p: make_pipeline(StandardScaler(), SGDClassifier(random_state=SEED, **p)),
-    },
-    "extra_trees": {
-        "family": "Ensemble",
-        "params": {"n_estimators": 60, "max_depth": 12, "min_samples_leaf": 20},
-        "build": lambda p: ExtraTreesClassifier(random_state=SEED, n_jobs=-1, **p),
-    },
-    "hist_gradient_boosting": {
+    "lightgbm": {
         "family": "Boosting",
-        "params": {"max_iter": 150, "learning_rate": 0.1, "max_leaf_nodes": 31},
-        "build": lambda p: HistGradientBoostingClassifier(random_state=SEED, **p),
-    },
-    "mlp": {
-        "family": "Neural network",
-        "params": {"hidden_layer_sizes": [32, 16], "batch_size": 2048, "max_iter": 25,
-                   "early_stopping": True, "n_iter_no_change": 4},
-        "build": lambda p: make_pipeline(StandardScaler(), MLPClassifier(
-            random_state=SEED, **{**p, "hidden_layer_sizes": tuple(p["hidden_layer_sizes"])})),
+        "params": {"n_estimators": 200, "learning_rate": 0.1, "num_leaves": 31, "min_child_samples": 50},
+        "build": lambda p: LGBMClassifier(random_state=SEED, n_jobs=-1, verbose=-1, **p),
     },
 }
 
