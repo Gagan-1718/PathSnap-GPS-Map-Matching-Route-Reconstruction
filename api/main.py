@@ -17,13 +17,14 @@ from pydantic import BaseModel
 
 from api.pipeline import (CONFIG, available_trips, gps_points, load_models, predict_trip,
                           route_geometry, score_prediction)
+from api.summary import dataset_summary, model_rows
 from hmm_viterbi.evaluate_hmm import load_params
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 log = logging.getLogger("pathsnap")
 
 SPLIT = os.environ.get("PATHSNAP_SPLIT", CONFIG["trip_split"])
-MODELS = load_models()
+MODELS = load_models(CONFIG.get("visible_models"))
 HMM_PARAMS = load_params()
 DEFAULT_MODEL = CONFIG["default_model"] if CONFIG["default_model"] in MODELS else next(iter(MODELS))
 log.info("Loaded models: %s (default: %s) | trip split: %s", list(MODELS), DEFAULT_MODEL, SPLIT)
@@ -45,6 +46,12 @@ def health():
 @app.get("/models")
 def models():
     return {"models": list(MODELS), "default_model": DEFAULT_MODEL}
+
+
+@app.get("/summary")
+def summary():
+    """Experiment results for the models on show (aggregate metrics only)."""
+    return {"default_model": DEFAULT_MODEL, "models": model_rows(list(MODELS)), "dataset": dataset_summary()}
 
 
 @app.get("/trips")
