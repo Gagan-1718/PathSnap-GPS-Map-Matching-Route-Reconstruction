@@ -1,4 +1,4 @@
-# PathSnap – GPS Map-Matching & Route Reconstruction
+﻿# PathSnap â€“ GPS Map-Matching & Route Reconstruction
 
 Noisy GPS points often drift off the road. PathSnap snaps each GPS point to the road segment the vehicle was really on.
 It uses a machine-learning classifier to score nearby road segments, then an HMM + Viterbi decoder to turn those scores into one connected route.
@@ -56,7 +56,7 @@ Then place the dataset in `data/` (see [data/README.md](data/README.md)).
 
 ## Reproducing the results
 
-**Google Colab:** open [PathSnap_Colab.ipynb](PathSnap_Colab.ipynb) →
+**Google Colab:** open [PathSnap_Colab.ipynb](PathSnap_Colab.ipynb) â†’
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Gagan-1718/PathSnap-GPS-Map-Matching-Route-Reconstruction/blob/feat/pathsnap-pipeline/PathSnap_Colab.ipynb).
 It clones this repo, asks you to upload the dataset zip, and runs every stage below with its outputs.
 
@@ -68,7 +68,7 @@ python -m feature_engineering.build_dataset       # candidates, features, labels
 python -m model_training.train_models             # 5 models, 5-fold GroupKFold CV
 python -m model_evaluation.evaluate_models        # student-test comparison
 python -m hmm_viterbi.tune_decoder random_forest  # decoder penalties (training trips only)
-python -m hyperparameter_optimisation.bayes_opt random_forest 25
+python -m hyperparameter_optimisation.bayes_opt random_forest 20
 python -m hmm_viterbi.evaluate_hmm                # classifier-only vs classifier + HMM
 python -m visualisations.plots                    # plots in results/plots
 python -m visualisations.folium_maps random_forest_tuned   # maps in results/maps
