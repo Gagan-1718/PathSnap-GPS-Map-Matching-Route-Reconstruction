@@ -12,71 +12,72 @@
   :root {
     --bg: #111413; --panel: #161a18; --panel-2: #1b201d; --line: #262b28; --line-2: #333934;
     --text: #ecebe4; --muted: #9a9e97; --faint: #6b706a;
-    --green: #9fbf8c; --orange: #d4895a; --gps: #7fb0e0; --red: #e0664f;
+    --accent-green: #9fbf8c; --accent-orange: #d4895a; --err: #e66767;
+    /* chart series (validated for the dark surface with the dataviz palette checker) */
+    --s-clf: #3987e5; --s-hmm: #d95926;
+    --s-m1: #199e70; --s-m2: #9085e9; --s-m3: #c98500;
+    --gps: #7fb0e0;
     --serif: "Cormorant Garamond", Georgia, serif;
     --sans: "IBM Plex Sans", system-ui, sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, monospace;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 var(--sans); }
-  a { color: inherit; }
   button { font: inherit; cursor: pointer; }
+  code { font: 13px var(--mono); color: var(--muted); }
 
   /* ---------- top nav ---------- */
   header { position: sticky; top: 0; z-index: 1000; display: flex; align-items: center; gap: 28px;
-           padding: 14px 32px; background: rgba(17,20,19,.92); backdrop-filter: blur(6px);
-           border-bottom: 1px solid var(--line); }
-  .brand { font: 600 28px/1 var(--serif); letter-spacing: .2px; white-space: nowrap; }
-  .brand em { color: var(--orange); font-style: italic; }
+           padding: 14px 32px; background: rgba(17,20,19,.92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+  .brand { font: 600 28px/1 var(--serif); white-space: nowrap; }
+  .brand em { color: var(--accent-orange); font-style: italic; }
   nav { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
-  nav button { background: none; border: 0; color: var(--muted); padding: 7px 12px; border-radius: 6px;
-               font-size: 15px; white-space: nowrap; }
+  nav button { background: none; border: 0; color: var(--muted); padding: 7px 12px; border-radius: 6px; font-size: 15px; white-space: nowrap; }
   nav button span { font: 12px var(--mono); color: var(--faint); margin-right: 6px; }
   nav button:hover { color: var(--text); }
   nav button.active { background: var(--panel-2); color: var(--text); font-weight: 600; }
-  .pill { display: flex; align-items: center; gap: 8px; background: none; border: 0; color: var(--text);
-          font-size: 14px; white-space: nowrap; padding: 6px 8px; border-radius: 6px; }
+  .pill { display: flex; align-items: center; gap: 8px; background: none; border: 0; color: var(--text); font-size: 14px; white-space: nowrap; padding: 6px 8px; border-radius: 6px; }
   .pill:hover { background: var(--panel-2); }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
-  .dot.on { background: var(--green); box-shadow: 0 0 0 3px rgba(159,191,140,.15); }
-  .dot.off { background: var(--red); }
-  .api-box { position: absolute; right: 24px; top: 58px; width: 340px; padding: 16px; background: var(--panel);
-             border: 1px solid var(--line-2); border-radius: 10px; display: none; }
+  .dot.on { background: var(--accent-green); box-shadow: 0 0 0 3px rgba(159,191,140,.15); }
+  .dot.off { background: var(--err); }
+  .api-box { position: absolute; right: 24px; top: 58px; width: 340px; padding: 16px; background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; display: none; }
   .api-box.open { display: block; }
-  .api-box label { display: block; font: 12px var(--mono); color: var(--muted); margin-bottom: 6px; letter-spacing: .5px; }
+  .api-box label { display: block; font: 12px var(--mono); color: var(--muted); margin-bottom: 6px; }
   .api-box .row { display: flex; gap: 8px; }
-  input, select { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line-2);
-                  border-radius: 6px; padding: 9px 10px; font: 14px var(--sans); }
+  input, select { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line-2); border-radius: 6px; padding: 9px 10px; font: 14px var(--sans); }
   .btn { background: var(--text); color: var(--bg); border: 0; border-radius: 6px; padding: 10px 20px; font-weight: 600; }
   .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line-2); }
-  .btn:disabled { opacity: .45; cursor: default; }
 
   /* ---------- pages ---------- */
-  main { max-width: 1240px; margin: 0 auto; padding: 72px 32px 120px; }
+  main { max-width: 1240px; margin: 0 auto; padding: 64px 32px 120px; }
   section.page { display: none; }
   section.page.active { display: block; animation: fade .25s ease; }
   @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  .eyebrow { font: 500 12px var(--mono); letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); margin: 0 0 18px; }
+  .eyebrow { font: 500 12px var(--mono); letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
   h1 { font: 500 clamp(44px, 6vw, 76px)/1.02 var(--serif); margin: 0 0 22px; letter-spacing: -.5px; }
-  h1 em { color: var(--green); font-style: italic; display: block; }
-  h2 { font: 500 clamp(34px, 4vw, 48px)/1.08 var(--serif); margin: 0 0 14px; }
+  h1 em { color: var(--accent-green); font-style: italic; display: block; }
+  h2 { font: 500 clamp(34px, 4vw, 48px)/1.08 var(--serif); margin: 0 0 12px; }
   h3 { font: 500 26px/1.15 var(--serif); margin: 0 0 6px; }
-  .lead { color: #c9cac2; font-size: 18px; max-width: 640px; margin: 0 0 28px; }
+  h4 { font: 500 12px var(--mono); letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+  .lead { color: #c9cac2; font-size: 18px; max-width: 700px; margin: 0 0 28px; }
   .lead b { color: var(--text); }
-  .muted { color: var(--muted); }
-  .small { font-size: 14px; }
+  .muted { color: var(--muted); } .small { font-size: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 26px 28px; }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .card-head p { margin: 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
+  .span2 { grid-column: span 2; }
 
+  /* ---------- overview ---------- */
   .hero { display: grid; grid-template-columns: 1.25fr 1fr; gap: 56px; align-items: center; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 30px 32px; }
-  .stat { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 18px 0 20px;
-          border-bottom: 1px solid var(--line); }
+  .stat { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 18px 0 20px; border-bottom: 1px solid var(--line); }
   .stat .big { font: 500 64px/1 var(--serif); white-space: nowrap; }
   .stat p { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
-  .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: -8px; margin-bottom: 4px; }
+  .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin: -8px 0 4px; }
   .bar i { display: block; height: 100%; border-radius: 3px; transition: width .6s ease; }
   .takeaway { padding-top: 22px; }
-  .takeaway h3 { font-size: 26px; }
-
   .steps { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); margin: 6px 0 34px; }
   .steps div { padding: 20px 20px 0 0; }
   .steps div + div { border-left: 1px solid var(--line); padding-left: 20px; }
@@ -89,61 +90,85 @@
   .side label { display: block; font: 12px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase; margin: 0 0 8px; }
   .side .group { margin-bottom: 24px; }
   .trips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .trip { background: var(--panel); border: 1px solid var(--line-2); color: var(--text); border-radius: 6px;
-          padding: 9px 8px; font: 14px var(--mono); }
+  .trip { background: var(--panel); border: 1px solid var(--line-2); color: var(--text); border-radius: 6px; padding: 9px 8px; font: 14px var(--mono); }
   .trip:hover { border-color: var(--muted); }
   .trip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
   .trip:disabled { opacity: .5; }
   #status { font-size: 14px; color: var(--muted); min-height: 22px; }
-  #status.err { color: var(--red); } #status.ok { color: var(--green); }
+  #status.err { color: var(--err); } #status.ok { color: var(--accent-green); }
   #map { height: 560px; border-radius: 12px; border: 1px solid var(--line); background: #0d0f0e; }
   .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
   .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
   .tile .k { font: 11px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase; }
   .tile .v { font: 500 32px/1.1 var(--serif); margin-top: 4px; }
   .tile .s { font-size: 13px; color: var(--faint); }
-  .legend { display: flex; gap: 20px; font-size: 13px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
-  .legend i { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .legend { display: flex; gap: 18px; font-size: 13px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+  .legend i.ln { height: 3px; width: 18px; border-radius: 2px; vertical-align: middle; }
   .leaflet-container { font-family: var(--sans); }
   .leaflet-control-layers { background: var(--panel) !important; color: var(--text) !important; border: 1px solid var(--line-2) !important; }
 
-  /* ---------- tables ---------- */
-  table { width: 100%; border-collapse: collapse; font-size: 15px; }
-  th { text-align: left; font: 500 11px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase;
-       padding: 10px 12px; border-bottom: 1px solid var(--line-2); }
-  td { padding: 14px 12px; border-bottom: 1px solid var(--line); }
+  /* ---------- results: kpis + charts ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 4px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .kpi .k { font: 11px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase; }
+  .kpi .v { font: 500 46px/1.05 var(--serif); margin-top: 6px; }
+  .kpi .s { font-size: 13px; color: var(--faint); margin-top: 2px; }
+  .chart { position: relative; width: 100%; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart text { font-family: var(--sans); }
+  .axis text { fill: var(--faint); font-size: 11px; font-family: var(--mono); }
+  .axis line, .axis path { stroke: var(--line); }
+  .grid-line { stroke: var(--line); stroke-dasharray: 2 4; }
+  .empty { color: var(--faint); font-size: 14px; padding: 40px 0; text-align: center; }
+  #tip { position: fixed; z-index: 2000; pointer-events: none; background: #0b0d0c; border: 1px solid var(--line-2); border-radius: 8px;
+         padding: 8px 10px; font-size: 13px; color: var(--text); opacity: 0; transition: opacity .1s; max-width: 260px; }
+  #tip b { font-weight: 600; } #tip .t { color: var(--muted); font: 11px var(--mono); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font: 500 11px var(--mono); color: var(--muted); letter-spacing: .8px; text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid var(--line-2); }
+  td { padding: 13px 12px; border-bottom: 1px solid var(--line); }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   tr.best td { background: rgba(212,137,90,.07); }
-  .tag { font: 11px var(--mono); color: var(--orange); border: 1px solid rgba(212,137,90,.4); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
-  .hbar { margin: 14px 0; }
-  .hbar .lbl { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
-  .hbar .track { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .tag { font: 11px var(--mono); color: var(--accent-orange); border: 1px solid rgba(212,137,90,.4); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: 0; }
 
-  /* ---------- how it works ---------- */
-  .flow { counter-reset: s; margin-top: 30px; }
-  .flow .item { display: grid; grid-template-columns: 70px 1fr 1fr; gap: 28px; padding: 26px 0; border-top: 1px solid var(--line); }
-  .flow .num { font: 500 44px/1 var(--serif); color: var(--faint); }
-  .flow p { margin: 0; color: #c9cac2; }
-  .flow .why { color: var(--muted); font-size: 15px; }
-  .flow .why b { color: var(--text); font-weight: 500; }
-  .kv { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
+  /* ---------- how it works: pipeline ---------- */
+  .pipeline { display: flex; align-items: stretch; gap: 0; margin: 28px 0 8px; overflow-x: auto; padding-bottom: 6px; }
+  .node { flex: 1 1 0; min-width: 140px; background: var(--panel); border: 1px solid var(--line-2); border-radius: 12px; padding: 16px 14px; position: relative; }
+  .node .ix { font: 11px var(--mono); color: var(--faint); }
+  .node .nm { font: 500 21px/1.15 var(--serif); margin: 4px 0 6px; }
+  .node .ds { font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .node.ml { border-color: rgba(144,133,233,.55); }
+  .node.hmm { border-color: rgba(217,89,38,.6); }
+  .node .io { font: 11px var(--mono); color: var(--faint); margin-top: 10px; border-top: 1px dashed var(--line-2); padding-top: 8px; }
+  .arrow { flex: 0 0 28px; display: flex; align-items: center; justify-content: center; color: var(--faint); font-size: 18px; }
+  .lanes { display: flex; gap: 10px; font: 11px var(--mono); color: var(--faint); margin: 2px 0 0; flex-wrap: wrap; }
+  .lanes span { border: 1px solid var(--line-2); border-radius: 20px; padding: 2px 10px; }
+  .model-card .fam { font: 11px var(--mono); color: var(--faint); letter-spacing: .8px; text-transform: uppercase; }
+  .model-card h3 { display: flex; align-items: center; gap: 10px; }
+  .model-card p { color: #c9cac2; font-size: 15px; margin: 8px 0 12px; }
+  .model-card dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 14px; }
+  .model-card dt { color: var(--muted); font: 12px var(--mono); padding-top: 2px; }
+  .model-card dd { margin: 0; }
+  .pc { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; font-size: 14px; }
+  .pc div h4 { margin-bottom: 6px; }
+  .pc ul { margin: 0; padding-left: 18px; color: #c9cac2; } .pc li { margin: 3px 0; }
+  .formula { font: 13px var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; color: #c9cac2; margin: 10px 0; overflow-x: auto; white-space: nowrap; }
 
   /* ---------- pager ---------- */
-  .pager { position: fixed; right: 28px; bottom: 24px; display: flex; align-items: center; gap: 14px; z-index: 1000;
-           background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; padding: 6px; }
+  .pager { position: fixed; right: 28px; bottom: 24px; display: flex; align-items: center; gap: 14px; z-index: 1000; background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; padding: 6px; }
   .pager button { background: none; border: 0; color: var(--muted); padding: 8px 12px; border-radius: 6px; }
   .pager button.next { background: var(--text); color: var(--bg); font-weight: 600; }
   .pager button:disabled { opacity: .35; cursor: default; }
   .pager .count { font: 13px var(--mono); color: var(--muted); }
 
   @media (max-width: 960px) {
-    .hero, .try, .grid2 { grid-template-columns: 1fr; }
-    .tiles, .kv { grid-template-columns: 1fr 1fr; }
-    .flow .item { grid-template-columns: 50px 1fr; } .flow .why { grid-column: 2; }
+    .hero, .try, .grid2, .grid3, .pc { grid-template-columns: 1fr; } .span2 { grid-column: auto; }
+    .tiles, .kpis { grid-template-columns: 1fr 1fr; }
     header { padding: 12px 16px; gap: 14px; } main { padding: 40px 16px 110px; }
     .brand { font-size: 24px; } .pill .txt { display: none; }
     .steps { grid-template-columns: 1fr; } .steps div + div { border-left: 0; padding-left: 0; }
+    .pipeline { flex-direction: column; } .arrow { transform: rotate(90deg); flex-basis: 24px; }
   }
 </style>
 </head>
@@ -179,12 +204,12 @@
           <button class="btn ghost" onclick="go(2)">See the results</button>
         </div>
       </div>
-      <div class="card">
+      <div class="card" style="padding:30px 32px">
         <p class="eyebrow" id="cardTitle">Top-1 accuracy on student-test GPS points</p>
         <div class="stat"><div><h3>Classifier only</h3><p>Best-scoring road for each point, on its own</p></div><div class="big" id="ovClf">—</div></div>
-        <div class="bar"><i id="ovClfBar" style="width:0;background:var(--green)"></i></div>
+        <div class="bar"><i id="ovClfBar" style="width:0;background:var(--s-clf)"></i></div>
         <div class="stat"><div><h3>+ HMM / Viterbi</h3><p>Same model, decoded as one connected route</p></div><div class="big" id="ovHmm">—</div></div>
-        <div class="bar"><i id="ovHmmBar" style="width:0;background:var(--orange)"></i></div>
+        <div class="bar"><i id="ovHmmBar" style="width:0;background:var(--s-hmm)"></i></div>
         <div class="takeaway"><h3 id="ovTake">Connect to the API to load results.</h3><p class="small muted" id="ovNote"></p></div>
       </div>
     </div>
@@ -204,9 +229,9 @@
       <div>
         <div id="map"></div>
         <div class="legend">
-          <span><i style="background:var(--gps);height:8px;width:8px;border-radius:50%"></i>Raw GPS points</span>
-          <span><i style="background:var(--orange)"></i>Predicted route (classifier + HMM)</span>
-          <span><i style="background:var(--muted);height:2px;border-top:2px dashed var(--muted);background:none"></i>Gap: route not connected</span>
+          <span><i style="background:var(--gps);border-radius:50%;width:9px;height:9px"></i>Raw GPS points</span>
+          <span><i class="ln" style="background:var(--s-hmm)"></i>Predicted route (classifier + HMM)</span>
+          <span><i class="ln" style="background:none;border-top:2px dashed var(--muted)"></i>Gap: route not connected</span>
         </div>
         <div class="tiles">
           <div class="tile"><div class="k">Top-1 · HMM</div><div class="v" id="tHmm">—</div><div class="s" id="tClf">classifier only —</div></div>
@@ -220,37 +245,105 @@
 
   <!-- 03 Results -->
   <section class="page" data-title="Results">
-    <p class="eyebrow">Experiments · 80 training trips, 10 student-test trips</p>
-    <h2>Model comparison</h2>
-    <p class="lead small">Cross-validation uses 5-fold GroupKFold, grouped by trip, so no trip is in both training and validation. Test scores are on the 10 student-test trips. Every number comes from <code>results/*.csv</code>.</p>
-    <div class="card" style="padding:8px 8px 4px; overflow-x:auto">
-      <table id="resTable"><thead><tr>
-        <th>Model</th><th>Family</th><th class="num">CV Macro F1</th><th class="num">CV Log loss</th>
-        <th class="num">Test Macro F1</th><th class="num">Test Log loss</th><th class="num">Top-1 classifier</th><th class="num">Top-1 + HMM</th>
-      </tr></thead><tbody></tbody></table>
-    </div>
+    <p class="eyebrow">Experiments · 80 training trips · 10 student-test trips</p>
+    <h2>Results</h2>
+    <p class="lead small">Cross-validation is 5-fold GroupKFold, grouped by trip, so a trip is never in both training and validation. Test scores are on the 10 student-test trips. Every number below is read from <code>results/*.csv</code>.</p>
+
+    <div class="kpis" id="kpis"></div>
+
     <div class="grid2">
-      <div class="card"><p class="eyebrow">Top-1 accuracy · classifier → + HMM</p><div id="barsTop1"></div></div>
-      <div class="card"><p class="eyebrow">Route continuity · classifier → + HMM</p><div id="barsCont"></div>
-        <p class="small muted">Share of consecutive predicted road changes that are physically connected.</p></div>
+      <div class="card">
+        <div class="card-head"><h3>Top-1 accuracy</h3><p class="small muted">share of GPS points matched to the right road</p></div>
+        <div class="chart" id="chTop1"></div>
+        <div class="legend"><span><i style="background:var(--s-clf)"></i>Classifier only</span><span><i style="background:var(--s-hmm)"></i>+ HMM / Viterbi</span></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Route continuity</h3><p class="small muted">road changes that are physically connected</p></div>
+        <div class="chart" id="chCont"></div>
+        <div class="legend"><span><i style="background:var(--s-clf)"></i>Classifier only</span><span><i style="background:var(--s-hmm)"></i>+ HMM / Viterbi</span></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head"><h3>Cross-validation by fold</h3><p class="small muted">Macro F1 per held-out fold of trips</p></div>
+        <div class="chart" id="chFolds"></div>
+        <div class="legend" id="lgFolds"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Bayesian optimisation</h3><p class="small muted" id="hpoSub">Optuna TPE · CV Macro F1 per trial</p></div>
+        <div class="chart" id="chHpo"></div>
+        <div class="legend"><span><i style="background:var(--s-m3);border-radius:50%"></i>Trial</span><span><i class="ln" style="background:var(--text)"></i>Best so far</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-head"><h3>Per trip: what HMM changes</h3><p class="small muted" id="tripSub">Top-1 accuracy on each student-test trip</p></div>
+      <div class="chart" id="chTrips"></div>
+      <div class="legend"><span><i style="background:var(--s-clf);border-radius:50%"></i>Classifier only</span><span><i style="background:var(--s-hmm);border-radius:50%"></i>+ HMM / Viterbi</span></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card span2" style="padding:20px 20px 8px; overflow-x:auto">
+        <div class="card-head" style="padding:0 4px"><h3>All numbers</h3><p class="small muted">table view of the charts above</p></div>
+        <table id="resTable"><thead><tr>
+          <th>Model</th><th>Family</th><th class="num">CV Macro F1</th><th class="num">CV Log loss</th>
+          <th class="num">Test Macro F1</th><th class="num">Test Log loss</th><th class="num">Top-1 clf</th><th class="num">Top-1 + HMM</th>
+          <th class="num">Continuity clf</th><th class="num">Continuity + HMM</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
     </div>
   </section>
 
   <!-- 04 How it works -->
   <section class="page" data-title="How it works">
-    <p class="eyebrow">Pipeline</p>
+    <p class="eyebrow">Pipeline · same code for training, evaluation and the API</p>
     <h2>From noisy GPS to a connected route</h2>
-    <div class="flow">
-      <div class="item"><div class="num">1</div><p><b>Clean and project.</b> Read the GPS track, nodes and arcs. Drop duplicate timestamps and single-point jumps faster than 180 km/h. Convert longitude and latitude to metres.</p>
-        <p class="why"><b>Why:</b> one degree of longitude here is about 75 km, but one degree of latitude is about 111 km, so distances in degrees would be wrong.</p></div>
-      <div class="item"><div class="num">2</div><p><b>Candidate roads.</b> A KD-tree finds every arc within 50 m of each GPS point and keeps the nearest 10.</p>
-        <p class="why"><b>Why:</b> it turns "which of thousands of roads?" into a small choice. The true road is in the list for more than 99% of points.</p></div>
-      <div class="item"><div class="num">3</div><p><b>Features and labels.</b> Distance, distance rank, gap to the nearest road, heading difference, speed, arc length, position along the arc, number of candidates, time gap.</p>
-        <p class="why"><b>Why:</b> the right road is usually close <i>and</i> points the way the car is moving. Labels: the nearest route arc within 30 m. Points the route doesn't cover are left out.</p></div>
-      <div class="item"><div class="num">4</div><p><b>Classifier.</b> Gives each candidate a probability of being the true road. Trained on 80 trips with grouped cross-validation, then tuned with Bayesian optimisation (Optuna TPE).</p>
-        <p class="why"><b>Why:</b> the HMM needs <b>probabilities</b>, so we also track log loss, not just accuracy.</p></div>
-      <div class="item"><div class="num">5</div><p><b>HMM + Viterbi.</b> Hidden states are the candidate roads. Emission is the classifier probability. Transition is high when two roads connect, a small cost per extra arc, and a big penalty for unconnected jumps. Viterbi finds the best chain.</p>
-        <p class="why"><b>Why:</b> scored one point at a time, the classifier can jump between unconnected roads. The HMM uses the whole sequence to keep the route continuous. After a GPS gap of more than 10 s, any road change is allowed.</p></div>
+
+    <div class="pipeline">
+      <div class="node"><div class="ix">01 · input</div><div class="nm">Raw trip</div><div class="ds">GPS track, road nodes, road arcs</div><div class="io">.track .nodes .arcs</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="ix">02 · clean</div><div class="nm">Clean &amp; project</div><div class="ds">Sort by time, drop duplicates and &gt;180 km/h jumps, convert to metres</div><div class="io">x, y in metres</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="ix">03 · search</div><div class="nm">Candidates</div><div class="ds">KD-tree: arcs within 50 m, nearest 10 per point</div><div class="io">~10 per point</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="ix">04 · features</div><div class="nm">Features</div><div class="ds">Distance, rank, heading difference, speed, arc length…</div><div class="io">10 numbers each</div></div>
+      <div class="arrow">→</div>
+      <div class="node ml"><div class="ix">05 · model</div><div class="nm">Classifier</div><div class="ds">Probability that the candidate is the true road</div><div class="io">P(correct)</div></div>
+      <div class="arrow">→</div>
+      <div class="node hmm"><div class="ix">06 · decode</div><div class="nm">HMM + Viterbi</div><div class="ds">Best chain of connected roads over the whole trip</div><div class="io">1 arc per point</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="ix">07 · output</div><div class="nm">Route</div><div class="ds">Drawn on the map and scored on the server</div><div class="io">route + metrics</div></div>
+    </div>
+    <div class="lanes"><span>training: steps 01–05 on 80 trips</span><span>evaluation: 01–06 on 10 student-test trips</span><span>API: 01–07 per request</span></div>
+
+    <div class="grid3">
+      <div class="card"><h4>Why metres?</h4><p class="small" style="margin:6px 0 0">At this latitude, one degree of longitude is about 75 km but one degree of latitude is about 111 km. Over a few kilometres, a local flat projection gives accurate metres.</p></div>
+      <div class="card"><h4>How are labels made?</h4><p class="small" style="margin:6px 0 0">The route lists arcs in driving order, not one per point. Each point's label is the nearest route arc within 30 m, preferring one that points the same way as the car. Points the route doesn't cover are left out.</p></div>
+      <div class="card"><h4>What does the classifier see?</h4><p class="small" style="margin:6px 0 0">One row per (GPS point, candidate road) pair. Label 1 means it's the true road, 0 means it isn't. That's about 10% positives, so we report Macro F1 alongside accuracy.</p></div>
+    </div>
+
+    <h3 style="margin:44px 0 4px">The models on show</h3>
+    <p class="muted small" style="margin:0 0 4px">Parameters are read live from <code>saved_models/*_config.json</code>.</p>
+    <div class="grid3" id="modelCards"></div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="model-card">
+        <div class="fam">Sequence decoder</div>
+        <h3><span class="sw" style="background:var(--s-hmm)"></span>Hidden Markov Model + Viterbi</h3>
+        <p>The classifier judges each GPS point on its own, so it can jump between roads that don't connect. The HMM looks at the whole trip and picks the most likely <b>chain</b> of roads.</p>
+        <div class="formula">score(road<sub>t</sub>) = max over road<sub>t−1</sub> [ score(road<sub>t−1</sub>) + transition(road<sub>t−1</sub> → road<sub>t</sub>) ] + log P(road<sub>t</sub> | GPS<sub>t</sub>)</div>
+        <div class="pc">
+          <div><h4>Pieces</h4><ul>
+            <li><b>Hidden state</b>: the candidate road of each GPS point</li>
+            <li><b>Emission</b>: log of the classifier probability</li>
+            <li><b>Transition</b>: 0 for the same or next connected arc, −1 per extra arc (up to 3), a big penalty if not connected</li></ul></div>
+          <div><h4>Edge cases</h4><ul>
+            <li><b>GPS gap &gt; 10 s</b>: any road change is allowed</li>
+            <li><b>Unconnected roads</b>: penalised, not forbidden, so the decoder never gets stuck</li>
+            <li><b>Penalties</b>: tuned on 15 held-out <i>training</i> trips</li></ul></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -259,14 +352,15 @@
     <p class="eyebrow">Dataset · from results/eda and results/features</p>
     <h2>What the data looks like</h2>
     <p class="lead small">Each trip has a GPS track (lon, lat, time, about 1 per second), road nodes, road arcs (from node → to node) and a reference route (an ordered list of arc ids).</p>
-    <div class="kv" id="dataTiles"></div>
-    <div class="card" style="margin-top:24px">
+    <div class="grid3" id="dataTiles" style="margin-top:0"></div>
+    <div class="card" style="margin-top:20px">
       <h3>Key finding: the reference route doesn't always cover the whole track</h3>
       <p class="muted small" style="margin:6px 0 0">In some training trips the route covers only part of the GPS track. In trip 54 only about 12% of points are within 30 m of the route. We label and score only the points that have a reference road nearby, and report this coverage openly.</p>
     </div>
   </section>
 </main>
 
+<div id="tip"></div>
 <div class="pager">
   <button id="back">← Back</button>
   <span class="count" id="count">1 / 5</span>
@@ -278,6 +372,8 @@
 const $ = (id) => document.getElementById(id);
 const pages = [...document.querySelectorAll("section.page")];
 let current = 0, summary = null, mapReady = false, map, gpsLayer, routeLayer;
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const MODEL_COLORS = ["--s-m1", "--s-m2", "--s-m3"];
 
 /* ---------- navigation ---------- */
 pages.forEach((p, i) => {
@@ -294,13 +390,15 @@ function go(i) {
   $("back").disabled = current === 0;
   $("next").disabled = current === pages.length - 1;
   window.scrollTo({ top: 0 });
-  if (pages[current].dataset.title === "Try it") initMap();
+  const t = pages[current].dataset.title;
+  if (t === "Try it") initMap();
+  if (t === "Results" && summary) drawCharts();
   try { localStorage.setItem("pathsnap_page", current); } catch (e) {}
 }
 $("back").onclick = () => go(current - 1);
 $("next").onclick = () => go(current + 1);
 document.addEventListener("keydown", (e) => {
-  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  if (["INPUT", "SELECT"].includes(e.target.tagName)) return;
   if (e.key === "ArrowRight") go(current + 1);
   if (e.key === "ArrowLeft") go(current - 1);
 });
@@ -308,7 +406,9 @@ document.addEventListener("keydown", (e) => {
 /* ---------- helpers ---------- */
 const pct = (x, d = 1) => x == null ? "—" : (100 * x).toFixed(d) + "%";
 const num = (x, d = 3) => x == null ? "—" : Number(x).toFixed(d);
-const pretty = (m) => m.replace(/_/g, " ").replace("tuned", "(tuned)").replace(/\b\w/g, c => c.toUpperCase()).replace("(Tuned)", "· tuned");
+const pretty = (m) => m.replace(/_tuned$/, "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) + (m.endsWith("_tuned") ? " · tuned" : "");
+const short = (m) => ({ logistic_regression: "Log. Regression", decision_tree: "Decision Tree", decision_tree_tuned: "Dec. Tree · tuned",
+  random_forest: "Random Forest", random_forest_tuned: "Rand. Forest · tuned", gaussian_naive_bayes: "Naive Bayes", knn: "KNN" })[m] || pretty(m);
 const api = () => $("api").value.replace(/\/+$/, "");
 function status(msg, cls = "") { $("status").textContent = msg; $("status").className = cls; }
 async function getJSON(path, opts) {
@@ -316,13 +416,181 @@ async function getJSON(path, opts) {
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
   return r.json();
 }
+const modelColor = (name) => css(MODEL_COLORS[summary.models.findIndex(m => m.model === name) % 3] || "--s-m1");
+
+/* ---------- tooltip ---------- */
+const tip = $("tip");
+function showTip(e, html) { tip.innerHTML = html; tip.style.opacity = 1; moveTip(e); }
+function moveTip(e) {
+  const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8);
+  tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px";
+}
+function hideTip() { tip.style.opacity = 0; }
+
+/* ---------- tiny SVG chart kit ---------- */
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs = {}, parent) {
+  const n = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function frame(container, h) {
+  container.innerHTML = "";
+  const w = Math.max(container.clientWidth, 280);
+  const svg = el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img" }, container);
+  return { svg, w, h };
+}
+function yAxis(svg, x0, x1, y, ticks, fmt) {
+  const g = el("g", { class: "axis" }, svg);
+  ticks.forEach(t => {
+    el("line", { x1: x0, x2: x1, y1: y(t), y2: y(t), class: "grid-line" }, g);
+    const tx = el("text", { x: x0 - 8, y: y(t) + 4, "text-anchor": "end" }, g); tx.textContent = fmt(t);
+  });
+}
+function roundedBar(svg, x, y, w, h, color) {
+  // 4px rounded data-end, square at the baseline
+  const r = Math.min(4, w / 2, h);
+  const d = `M${x},${y + h} V${y + r} Q${x},${y} ${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h} Z`;
+  return el("path", { d, fill: color }, svg);
+}
+
+/* grouped bars: categories x series, values 0..1 */
+function groupedBars(container, cats, series, opt = {}) {
+  if (!cats.length || series.every(s => s.values.every(v => v == null))) { container.innerHTML = '<div class="empty">No results yet. Run the HMM evaluation.</div>'; return; }
+  const { svg, w, h } = frame(container, 260);
+  const m = { l: 44, r: 8, t: 22, b: 30 };
+  const lo = opt.min ?? 0, hi = 1;
+  const y = v => m.t + (h - m.t - m.b) * (1 - (v - lo) / (hi - lo));
+  yAxis(svg, m.l, w - m.r, y, opt.ticks || [0, .25, .5, .75, 1], t => Math.round(t * 100) + "%");
+  const gw = (w - m.l - m.r) / cats.length, bw = Math.min(42, (gw * .62) / series.length), gap = 2;
+  cats.forEach((c, i) => {
+    const cx = m.l + gw * i + gw / 2, total = series.length * bw + (series.length - 1) * gap;
+    series.forEach((s, j) => {
+      const v = s.values[i]; if (v == null) return;
+      const x = cx - total / 2 + j * (bw + gap);
+      const bar = roundedBar(svg, x, y(v), bw, y(lo) - y(v), s.color);
+      const lbl = el("text", { x: x + bw / 2, y: y(v) - 6, "text-anchor": "middle", fill: css("--text"), "font-size": 11 }, svg);
+      lbl.textContent = (v * 100).toFixed(1);
+      const hit = el("rect", { x: x - 2, y: m.t, width: bw + 4, height: h - m.t - m.b, fill: "transparent" }, svg);
+      hit.addEventListener("mousemove", e => showTip(e, `<div class="t">${c}</div><b>${s.name}</b>: ${pct(v)}`));
+      hit.addEventListener("mouseleave", hideTip);
+    });
+    const t = el("text", { x: cx, y: h - 8, "text-anchor": "middle", fill: css("--muted"), "font-size": 12 }, svg); t.textContent = c;
+  });
+}
+
+/* line chart with markers (x = fold index) */
+function lineChart(container, xs, series, opt = {}) {
+  if (!series.length) { container.innerHTML = '<div class="empty">No fold results yet.</div>'; return; }
+  const { svg, w, h } = frame(container, 250);
+  const m = { l: 48, r: 92, t: 14, b: 30 };
+  const all = series.flatMap(s => s.values).filter(v => v != null);
+  const lo = Math.floor((Math.min(...all) - .01) * 50) / 50, hi = Math.ceil((Math.max(...all) + .005) * 50) / 50;
+  const y = v => m.t + (h - m.t - m.b) * (1 - (v - lo) / (hi - lo));
+  const x = i => m.l + (w - m.l - m.r) * (xs.length === 1 ? .5 : i / (xs.length - 1));
+  const ticks = []; for (let t = lo; t <= hi + 1e-9; t += (hi - lo) / 4) ticks.push(t);
+  yAxis(svg, m.l, w - m.r, y, ticks, t => t.toFixed(2));
+  xs.forEach((lab, i) => { const t = el("text", { x: x(i), y: h - 8, "text-anchor": "middle", class: "axis", fill: css("--faint"), "font-size": 11, "font-family": "IBM Plex Mono" }, svg); t.textContent = lab; });
+  series.forEach(s => {
+    const pts = s.values.map((v, i) => [x(i), y(v)]);
+    el("path", { d: "M" + pts.map(p => p.join(",")).join(" L"), fill: "none", stroke: s.color, "stroke-width": 2, "stroke-dasharray": s.dash || "" }, svg);
+    pts.forEach(([px, py], i) => {
+      el("circle", { cx: px, cy: py, r: 4.5, fill: s.color, stroke: css("--panel"), "stroke-width": 2 }, svg);
+      const hit = el("circle", { cx: px, cy: py, r: 12, fill: "transparent" }, svg);
+      hit.addEventListener("mousemove", e => showTip(e, `<div class="t">${xs[i]}</div><b>${s.name}</b>: ${s.values[i].toFixed(4)}`));
+      hit.addEventListener("mouseleave", hideTip);
+    });
+    if (s.label !== false) {
+      const last = pts[pts.length - 1];
+      const t = el("text", { x: last[0] + 10, y: last[1] + 4, fill: css("--muted"), "font-size": 12 }, svg); t.textContent = s.short || s.name;
+    }
+  });
+}
+
+/* Bayesian optimisation: trial dots + best-so-far step line */
+function hpoChart(container, hpo) {
+  if (!hpo) { container.innerHTML = '<div class="empty">Tuning results not available yet.</div>'; return; }
+  const { svg, w, h } = frame(container, 250);
+  const m = { l: 48, r: 14, t: 14, b: 30 };
+  const v = hpo.trials, n = v.length;
+  const lo = Math.floor((Math.min(...v) - .002) * 100) / 100, hi = Math.ceil((Math.max(...v) + .002) * 100) / 100;
+  const y = t => m.t + (h - m.t - m.b) * (1 - (t - lo) / (hi - lo));
+  const x = i => m.l + (w - m.l - m.r) * (n === 1 ? .5 : i / (n - 1));
+  const ticks = []; for (let t = lo; t <= hi + 1e-9; t += (hi - lo) / 4) ticks.push(t);
+  yAxis(svg, m.l, w - m.r, y, ticks, t => t.toFixed(3));
+  [0, Math.floor((n - 1) / 2), n - 1].forEach(i => { const t = el("text", { x: x(i), y: h - 8, "text-anchor": "middle", fill: css("--faint"), "font-size": 11, "font-family": "IBM Plex Mono" }, svg); t.textContent = "trial " + (i + 1); });
+  const best = hpo.best_so_far;
+  let d = `M${x(0)},${y(best[0])}`;
+  for (let i = 1; i < n; i++) d += ` H${x(i)} V${y(best[i])}`;
+  el("path", { d, fill: "none", stroke: css("--text"), "stroke-width": 2 }, svg);
+  v.forEach((t, i) => {
+    el("circle", { cx: x(i), cy: y(t), r: 4.5, fill: css("--s-m3"), stroke: css("--panel"), "stroke-width": 2, opacity: t === best[i] && (i === 0 || best[i] > best[i - 1]) ? 1 : .75 }, svg);
+    const hit = el("circle", { cx: x(i), cy: y(t), r: 11, fill: "transparent" }, svg);
+    const p = hpo.trial_params?.[i] || {};
+    const ps = Object.entries(p).map(([k, val]) => `${k} = ${typeof val === "number" ? +val.toFixed(3) : val}`).join("<br>");
+    hit.addEventListener("mousemove", e => showTip(e, `<div class="t">trial ${i + 1}${i === 0 ? " · untuned baseline" : ""}</div><b>${t.toFixed(4)}</b><br><span class="t">${ps}</span>`));
+    hit.addEventListener("mouseleave", hideTip);
+  });
+}
+
+/* per-trip dumbbell: classifier-only dot → HMM dot */
+function dumbbell(container, rows) {
+  if (!rows.length) { container.innerHTML = '<div class="empty">No per-trip results yet.</div>'; return; }
+  const rowH = 30, m = { l: 92, r: 60, t: 10, b: 28 };
+  const { svg, w, h } = frame(container, m.t + m.b + rowH * rows.length);
+  const all = rows.flatMap(r => [r.clf_top1, r.hmm_top1]);
+  const lo = Math.max(0, Math.floor((Math.min(...all) - .02) * 10) / 10), hi = 1;
+  const x = v => m.l + (w - m.l - m.r) * (v - lo) / (hi - lo);
+  const g = el("g", { class: "axis" }, svg);
+  for (let t = lo; t <= hi + 1e-9; t += .1) {
+    el("line", { x1: x(t), x2: x(t), y1: m.t, y2: h - m.b, class: "grid-line" }, g);
+    const tx = el("text", { x: x(t), y: h - 8, "text-anchor": "middle" }, g); tx.textContent = Math.round(t * 100) + "%";
+  }
+  rows.forEach((r, i) => {
+    const cy = m.t + rowH * i + rowH / 2;
+    const lab = el("text", { x: m.l - 12, y: cy + 4, "text-anchor": "end", fill: css("--muted"), "font-size": 12, "font-family": "IBM Plex Mono" }, svg); lab.textContent = r.trip_id;
+    el("line", { x1: x(r.clf_top1), x2: x(r.hmm_top1), y1: cy, y2: cy, stroke: css("--line-2"), "stroke-width": 3, "stroke-linecap": "round" }, svg);
+    el("circle", { cx: x(r.clf_top1), cy, r: 5, fill: css("--s-clf"), stroke: css("--panel"), "stroke-width": 2 }, svg);
+    el("circle", { cx: x(r.hmm_top1), cy, r: 5, fill: css("--s-hmm"), stroke: css("--panel"), "stroke-width": 2 }, svg);
+    const diff = (r.hmm_top1 - r.clf_top1) * 100;
+    const dt = el("text", { x: w - m.r + 10, y: cy + 4, fill: css("--text"), "font-size": 12 }, svg);
+    dt.textContent = (diff >= 0 ? "+" : "") + diff.toFixed(1);
+    const hit = el("rect", { x: m.l, y: cy - rowH / 2, width: w - m.l - m.r, height: rowH, fill: "transparent" }, svg);
+    hit.addEventListener("mousemove", e => showTip(e, `<div class="t">trip ${r.trip_id}</div>Classifier only: <b>${pct(r.clf_top1)}</b><br>+ HMM: <b>${pct(r.hmm_top1)}</b><br><span class="t">continuity ${pct(r.clf_continuity, 0)} → ${pct(r.hmm_continuity, 0)}</span>`));
+    hit.addEventListener("mouseleave", hideTip);
+  });
+  const hd = el("text", { x: w - m.r + 10, y: m.t - 0, fill: css("--faint"), "font-size": 10, "font-family": "IBM Plex Mono" }, svg); hd.textContent = "Δ pts";
+}
+
+function drawCharts() {
+  const rows = summary.models, ch = summary.charts || {};
+  const cats = rows.map(r => short(r.model));
+  groupedBars($("chTop1"), cats, [
+    { name: "Classifier only", color: css("--s-clf"), values: rows.map(r => r.clf_top1) },
+    { name: "+ HMM / Viterbi", color: css("--s-hmm"), values: rows.map(r => r.hmm_top1) }]);
+  groupedBars($("chCont"), cats, [
+    { name: "Classifier only", color: css("--s-clf"), values: rows.map(r => r.clf_continuity) },
+    { name: "+ HMM / Viterbi", color: css("--s-hmm"), values: rows.map(r => r.hmm_continuity) }]);
+  const folds = Object.entries(ch.folds || {});
+  const fs = [];
+  folds.forEach(([name, f]) => {
+    fs.push({ name: pretty(name) + " · validation", short: short(name), color: modelColor(name), values: f.val });
+  });
+  lineChart($("chFolds"), ["fold 1", "fold 2", "fold 3", "fold 4", "fold 5"], fs);
+  $("lgFolds").innerHTML = folds.map(([n]) => `<span><i style="background:${modelColor(n)}"></i>${pretty(n)}</span>`).join("");
+  hpoChart($("chHpo"), ch.hpo);
+  if (ch.hpo) $("hpoSub").textContent = `Optuna TPE · ${pretty(ch.hpo.model)} · ${ch.hpo.trials.length} trials · 3-fold grouped CV`;
+  dumbbell($("chTrips"), ch.per_trip || []);
+  $("tripSub").textContent = `Top-1 accuracy per student-test trip · ${pretty(summary.default_model)}`;
+}
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (summary && pages[current].dataset.title === "Results") drawCharts(); }, 150); });
 
 /* ---------- API connection ---------- */
 $("pill").onclick = () => $("apiBox").classList.toggle("open");
 $("connect").onclick = connect;
 try {
-  const q = new URLSearchParams(location.search).get("api");
-  const saved = localStorage.getItem("pathsnap_api");
+  const q = new URLSearchParams(location.search).get("api"), saved = localStorage.getItem("pathsnap_api");
   if (q) $("api").value = q; else if (saved) $("api").value = saved;
 } catch (e) {}
 
@@ -335,7 +603,8 @@ async function connect() {
     $("dot").className = "dot on"; $("pillText").textContent = "Model online";
     $("apiMsg").textContent = `Connected to ${api()} · ${trips.trips.length} trips (${trips.split})`;
     $("apiBox").classList.remove("open");
-    fillModels(health); fillTrips(trips.trips); fillOverview(); fillResults(); fillData();
+    fillModels(health); fillTrips(trips.trips); fillOverview(); fillResults(); fillModelCards(); fillData();
+    if (pages[current].dataset.title === "Results") drawCharts();
   } catch (e) {
     $("dot").className = "dot off"; $("pillText").textContent = "Model offline";
     $("apiMsg").textContent = "Could not reach the API: " + e.message;
@@ -370,17 +639,15 @@ function fillTrips(list) {
   $("trips").innerHTML = "";
   list.forEach(id => {
     const b = document.createElement("button");
-    b.className = "trip"; b.textContent = id;
-    b.onclick = () => run(id, b);
+    b.className = "trip"; b.textContent = id; b.onclick = () => run(id, b);
     $("trips").appendChild(b);
   });
   status(`${list.length} trips ready. Pick one.`);
 }
 function initMap() {
   if (mapReady) { setTimeout(() => map.invalidateSize(), 50); return; }
-  map = L.map("map", { zoomControl: true }).setView([47.66, 11.04], 12);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    { attribution: "&copy; OpenStreetMap &copy; CARTO", maxZoom: 19 }).addTo(map);
+  map = L.map("map").setView([47.66, 11.04], 12);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { attribution: "&copy; OpenStreetMap &copy; CARTO", maxZoom: 19 }).addTo(map);
   gpsLayer = L.layerGroup().addTo(map); routeLayer = L.layerGroup().addTo(map);
   L.control.layers(null, { "Raw GPS points": gpsLayer, "Predicted route": routeLayer }, { collapsed: false }).addTo(map);
   mapReady = true;
@@ -391,19 +658,18 @@ async function run(id, btn) {
   btn.classList.add("active");
   status(`Running trip ${id} on ${pretty($("model").value)}…`);
   try {
-    const res = await getJSON("/predict", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ trip_id: id, model: $("model").value }) });
+    const res = await getJSON("/predict", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trip_id: id, model: $("model").value }) });
     draw(res); status(`Trip ${id} done in ${res.inference_time_s}s.`, "ok");
   } catch (e) { status("Error: " + e.message, "err"); }
   document.querySelectorAll(".trip").forEach(b => b.disabled = false);
 }
 function draw(res) {
   gpsLayer.clearLayers(); routeLayer.clearLayers();
-  res.gps_points.forEach(p => L.circleMarker(p, { radius: 2.2, color: "#7fb0e0", weight: 0, fillOpacity: .85 }).addTo(gpsLayer));
-  res.predicted_route.forEach(line => L.polyline(line, { color: "#d4895a", weight: 4, opacity: .95 }).addTo(routeLayer));
+  res.gps_points.forEach(p => L.circleMarker(p, { radius: 2.2, color: css("--gps"), weight: 0, fillOpacity: .85 }).addTo(gpsLayer));
+  res.predicted_route.forEach(line => L.polyline(line, { color: css("--s-hmm"), weight: 4, opacity: .95 }).addTo(routeLayer));
   for (let i = 1; i < res.predicted_route.length; i++) {
     const a = res.predicted_route[i - 1], b = res.predicted_route[i];
-    L.polyline([a[a.length - 1], b[0]], { color: "#9a9e97", weight: 2, dashArray: "4 6", opacity: .8 }).addTo(routeLayer);
+    L.polyline([a[a.length - 1], b[0]], { color: css("--muted"), weight: 2, dashArray: "4 6", opacity: .8 }).addTo(routeLayer);
   }
   const bounds = L.latLngBounds(res.gps_points);
   if (bounds.isValid()) map.fitBounds(bounds, { padding: [24, 24] });
@@ -416,24 +682,58 @@ function draw(res) {
 
 /* ---------- results ---------- */
 function fillResults() {
-  const rows = summary.models;
-  const best = summary.default_model;
+  const rows = summary.models, best = summary.default_model;
+  const f = rows.find(r => r.model === best) || rows[0] || {};
+  const kpis = [
+    ["CV Macro F1", num(f.cv_macro_f1), "5-fold grouped CV" + (f.tuned ? " (tuned)" : "")],
+    ["Test Macro F1", num(f.test_macro_f1), "10 student-test trips"],
+    ["Top-1 + HMM", pct(f.hmm_top1), `classifier only ${pct(f.clf_top1)}`],
+    ["Continuity + HMM", pct(f.hmm_continuity, 0), `classifier only ${pct(f.clf_continuity, 0)}`],
+  ];
+  $("kpis").innerHTML = kpis.map(([k, v, s]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
+  $("kpis").insertAdjacentHTML("beforebegin", "");
   $("resTable").querySelector("tbody").innerHTML = rows.map(r => `
     <tr class="${r.model === best ? "best" : ""}">
-      <td>${pretty(r.model)}${r.model === best ? '<span class="tag">final</span>' : ""}</td>
+      <td><span class="sw" style="background:${modelColor(r.model)}"></span>${pretty(r.model)}${r.model === best ? '<span class="tag">final</span>' : ""}</td>
       <td class="muted">${r.family || "—"}</td>
-      <td class="num">${num(r.cv_macro_f1)}${r.cv_macro_f1_std != null ? `<span class="muted small"> ±${num(r.cv_macro_f1_std, 3)}</span>` : ""}</td>
-      <td class="num">${num(r.cv_log_loss)}</td>
-      <td class="num">${num(r.test_macro_f1)}</td><td class="num">${num(r.test_log_loss)}</td>
+      <td class="num">${num(r.cv_macro_f1)}${r.cv_macro_f1_std != null ? `<span class="muted small"> ±${num(r.cv_macro_f1_std)}</span>` : ""}</td>
+      <td class="num">${num(r.cv_log_loss)}</td><td class="num">${num(r.test_macro_f1)}</td><td class="num">${num(r.test_log_loss)}</td>
       <td class="num">${pct(r.clf_top1)}</td><td class="num"><b>${pct(r.hmm_top1)}</b></td>
+      <td class="num">${pct(r.clf_continuity)}</td><td class="num"><b>${pct(r.hmm_continuity)}</b></td>
     </tr>`).join("");
-  const bars = (key1, key2) => rows.map(r => `
-    <div class="hbar"><div class="lbl"><span>${pretty(r.model)}</span><span class="muted">${pct(r[key1])} → <b style="color:var(--text)">${pct(r[key2])}</b></span></div>
-      <div class="track" style="margin-bottom:4px"><i style="display:block;height:100%;width:${pct(r[key1])};background:var(--green)"></i></div>
-      <div class="track"><i style="display:block;height:100%;width:${pct(r[key2])};background:var(--orange)"></i></div></div>`).join("") +
-    `<div class="legend"><span><i style="background:var(--green)"></i>Classifier only</span><span><i style="background:var(--orange)"></i>+ HMM / Viterbi</span></div>`;
-  $("barsTop1").innerHTML = bars("clf_top1", "hmm_top1");
-  $("barsCont").innerHTML = bars("clf_continuity", "hmm_continuity");
+}
+
+/* ---------- model cards ---------- */
+const MODEL_INFO = {
+  logistic_regression: {
+    how: "Adds up the features with learned weights and squashes the total into a probability with the sigmoid. Features are standardised first.",
+    formula: "P(correct) = 1 / (1 + e<sup>−(w·x + b)</sup>)",
+    pros: ["Fast, with well-calibrated probabilities (good for the HMM)", "Weights are easy to explain"],
+    cons: ["Straight-line boundary only", "Can't learn interactions like 'close AND same direction' by itself"] },
+  decision_tree: {
+    how: "Learns a tree of yes/no questions, such as 'distance < 12 m?' or 'heading difference < 30°?'. The probability is the share of true roads in the leaf.",
+    formula: "split = argmin weighted Gini impurity of the two children",
+    pros: ["Captures non-linear interactions", "No scaling needed, very fast to predict"],
+    cons: ["Overfits if too deep, so depth and leaf size are limited", "Step-like probabilities"] },
+  random_forest: { how: "Many decision trees on random samples and features, averaged.", formula: "P = mean of tree probabilities", pros: ["Stable, strong"], cons: ["Slower, larger file"] },
+  gaussian_naive_bayes: { how: "Assumes features are independent and normally distributed per class.", formula: "P(y|x) ∝ P(y) Π P(x_i|y)", pros: ["Very fast"], cons: ["Independence assumption is broken here"] },
+  knn: { how: "Votes of the 25 most similar training candidates.", formula: "P = weighted share of positive neighbours", pros: ["No training"], cons: ["Very slow to predict, large model"] },
+};
+function fillModelCards() {
+  $("modelCards").innerHTML = summary.models.map(r => {
+    const base = r.model.replace(/_tuned$/, ""), info = MODEL_INFO[base] || { how: "", pros: [], cons: [] };
+    const params = Object.entries(r.params || {}).map(([k, v]) => `<dt>${k}</dt><dd>${typeof v === "number" ? +v.toFixed(4) : v}</dd>`).join("");
+    const tunedNote = r.tuned ? `<p class="small muted" style="margin:0 0 10px">Same algorithm, with hyperparameters chosen by Bayesian optimisation (Optuna TPE) on grouped CV over the training trips.</p>` : "";
+    return `<div class="card model-card">
+      <div class="fam">${r.family || ""}${r.tuned ? " · tuned" : ""}</div>
+      <h3><span class="sw" style="background:${modelColor(r.model)}"></span>${pretty(r.model)}</h3>
+      <p>${info.how}</p>${tunedNote}
+      ${info.formula ? `<div class="formula">${info.formula}</div>` : ""}
+      <dl>${params}<dt>CV Macro F1</dt><dd>${num(r.cv_macro_f1)}</dd><dt>Top-1 + HMM</dt><dd>${pct(r.hmm_top1)}</dd></dl>
+      <div class="pc"><div><h4>Strengths</h4><ul>${info.pros.map(x => `<li>${x}</li>`).join("")}</ul></div>
+        <div><h4>Limits</h4><ul>${info.cons.map(x => `<li>${x}</li>`).join("")}</ul></div></div>
+    </div>`;
+  }).join("");
 }
 
 /* ---------- data ---------- */
@@ -447,8 +747,7 @@ function fillData() {
     ["Route coverage", pct(tr.label_coverage), "GPS points labelled (train)"],
     ["Candidate miss rate", pct(tr.candidate_miss_rate, 2), "true road not among candidates"],
   ];
-  $("dataTiles").innerHTML = tiles.map(([k, v, s]) =>
-    `<div class="tile"><div class="k">${k}</div><div class="v">${v ?? "—"}</div><div class="s">${s}</div></div>`).join("");
+  $("dataTiles").innerHTML = tiles.map(([k, v, s]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v ?? "—"}</div><div class="s">${s}</div></div>`).join("");
 }
 
 /* ---------- start ---------- */
