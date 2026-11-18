@@ -17,3 +17,6 @@ docs/*.pdf
 .idea/
 .DS_Store
 Thumbs.db
+
+# Rebuilt feature tables
+cache/
