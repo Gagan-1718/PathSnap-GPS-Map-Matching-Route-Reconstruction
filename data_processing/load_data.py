@@ -35,12 +35,28 @@ def load_trip(split, trip_id, with_route=True):
     return trip
 
 
+MAX_SPEED_MPS = 50.0  # 180 km/h: faster jumps are GPS errors
+
+
+def remove_spikes(track):
+    """Drop single-point GPS jumps: points that are too fast to reach AND to leave."""
+    proj = LocalProjection(track["lon"].mean(), track["lat"].mean())
+    xy = proj.to_xy(track["lon"].to_numpy(), track["lat"].to_numpy())
+    t = track["t"].to_numpy()
+    if len(xy) < 3:
+        return track
+    speed = np.linalg.norm(np.diff(xy, axis=0), axis=1) / np.maximum(np.diff(t), 1e-6)
+    spike = np.zeros(len(xy), bool)
+    spike[1:-1] = (speed[:-1] > MAX_SPEED_MPS) & (speed[1:] > MAX_SPEED_MPS)
+    return track[~spike].reset_index(drop=True)
+
+
 def clean_track(track):
-    """Drop invalid rows, sort by time and remove duplicate timestamps."""
+    """Drop invalid rows, sort by time, remove duplicate timestamps and GPS spikes."""
     t = track.dropna()
     t = t[t["lon"].between(-180, 180) & t["lat"].between(-90, 90)]
     t = t.sort_values("t").drop_duplicates("t").reset_index(drop=True)
-    return t
+    return remove_spikes(t)
 
 
 class LocalProjection:
