@@ -104,7 +104,11 @@
   .tile .s { font-size: 14px; color: var(--faint); }
   .legend { display: flex; gap: 18px; font-size: 14px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
   .map-pin { width: 14px; height: 14px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.6); }
-  .leaflet-control-layers label { font-size: 13px; }
+  .leaflet-control-layers { padding: 8px 10px !important; border-radius: 8px !important; }
+  .leaflet-control-layers label { font-size: 14px; margin: 2px 0; }
+  .leaflet-control-layers label > span { display: flex; align-items: center; gap: 8px; }
+  .leaflet-control-layers input { width: auto; margin: 0; padding: 0; accent-color: var(--accent-orange); }
+  .leaflet-control-layers-separator { border-top-color: var(--line-2) !important; }
   .leaflet-tooltip { font: 13px var(--sans); }
   .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
   .legend i.ln { height: 3px; width: 18px; border-radius: 2px; vertical-align: middle; }
@@ -652,12 +656,13 @@ function initMap() {
   if (mapReady) { setTimeout(() => map.invalidateSize(), 50); return; }
   map = L.map("map").setView([47.66, 11.04], 12);
   const bases = {
-    "Streets": L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-      { attribution: "&copy; OpenStreetMap &copy; CARTO", maxZoom: 19 }),
+    // key-free tile providers
+    "Streets": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      { attribution: "&copy; OpenStreetMap contributors", maxZoom: 19 }),
     "Satellite": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       { attribution: "Imagery &copy; Esri", maxZoom: 19 }),
-    "Dark": L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-      { attribution: "&copy; OpenStreetMap &copy; CARTO", maxZoom: 19 }),
+    "Dark": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+      { attribution: "&copy; Esri", maxZoom: 16 }),
   };
   bases["Streets"].addTo(map);
   routeLayer = L.layerGroup().addTo(map); gpsLayer = L.layerGroup().addTo(map); pinLayer = L.layerGroup().addTo(map);
